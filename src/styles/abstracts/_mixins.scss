@@ -1,0 +1,134 @@
+@use 'variables' as *;
+
+// ==========================================
+// 1. FLEXBOX
+// ==========================================
+@mixin flexbox($flexDirection: row, $justifyContent: flex-start, $alignItems: stretch, $gap: 0) {
+  display: flex;
+  flex-direction: $flexDirection;
+  justify-content: $justifyContent;
+  align-items: $alignItems;
+  gap: $gap;
+}
+
+// ==========================================
+// 2. LAYOUT & POSITIONIERUNG
+// ==========================================
+
+@mixin grid-auto($minWidth, $gap: 1rem) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax($minWidth, 1fr));
+  gap: $gap;
+}
+
+@mixin global_content_wrapper() {
+  max-width: var(--container-content-md);
+  width: 100%;
+  padding-inline: clamp(var(--space-lg), 5vw, var(--space-2xl));
+  box-sizing: border-box;
+}
+
+@mixin abs-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// ==========================================
+// 3. STUDIO-HARDWARE & DARK-MODE STYLING
+// ==========================================
+
+@mixin studio-panel($radius: 6px) {
+  background: var(--surface-panel, #1a1a1e);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: $radius;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05); // Subtile Lichtkante oben
+}
+
+@mixin hardware-recess($radius: 4px) {
+  background: var(--surface-deep, #0f0f12);
+  border-radius: $radius;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.8),
+    0 1px 0 rgba(255, 255, 255, 0.05); // Lichtkante unten
+}
+
+@mixin led-indicator($color, $size: 8px) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+  background-color: $color;
+  box-shadow:
+    0 0 6px $color,
+    0 0 12px rgba($color, 0.4);
+}
+
+// ==========================================
+// 4. AUDIO-RACK SCROLLBAR
+// ==========================================
+@mixin hardware-scrollbar($thumbColor: rgba(255, 255, 255, 0.2), $trackColor: transparent) {
+  scrollbar-width: thin;
+  scrollbar-color: $thumbColor$trackColor;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $trackColor;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $thumbColor;
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.35);
+    }
+  }
+}
+
+// ==========================================
+// 5. RESPONSIVE BREAKPOINTS
+// ==========================================
+
+@mixin respond-to($size) {
+  @if $size == xxl {
+    @media (max-width: $breakpoint-xxl) {
+      @content;
+    }
+  } @else if $size == xl {
+    @media (max-width: $breakpoint-xl) {
+      @content;
+    }
+  } @else if $size == lg {
+    @media (max-width: $breakpoint-lg) {
+      @content;
+    }
+  } @else if $size == md {
+    @media (max-width: $breakpoint-md) {
+      @content;
+    }
+  } @else if $size == sm {
+    @media (max-width: $breakpoint-sm) {
+      @content;
+    }
+  } @else if $size == xsm {
+    @media (max-width: $breakpoint-xsm) {
+      @content;
+    }
+  } @else {
+    @error "Unbekannter Breakpoint: #{$size}.";
+  }
+}
+
+@mixin landscape-mobile {
+  @media (max-height: $breakpoint-rotate) {
+    @content;
+  }
+}

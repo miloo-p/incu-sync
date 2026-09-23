@@ -1,0 +1,126 @@
+// ==========================================
+// 1. MODERN CSS RESET & BOX-SIZING
+// ==========================================
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: dark;
+  font-size: 100%; // 16px
+}
+
+// ==========================================
+// 2. BODY & STUDIO CHASSIS
+// ==========================================
+
+body {
+  min-height: 100vh;
+  font-family: var(--ff-sans);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+  background-color: var(--surface-chassis);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow-x: hidden;
+}
+
+// ==========================================
+// 3. TYPOGRAPHY (HEADINGS)
+// ==========================================
+
+h1,
+h2,
+h3 {
+  font-family: var(--ff-sans);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  margin-bottom: var(--space-md);
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  margin-bottom: var(--space-sm);
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  margin-bottom: var(--space-xs);
+}
+
+p {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// ==========================================
+// 4. INTERACTION & CONTROLS RESET
+// ==========================================
+
+a {
+  color: var(--led-active);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--led-active);
+    outline-offset: 2px;
+  }
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--led-active);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+// ==========================================
+// 5. TEXT SELECTION
+// ==========================================
+
+::selection {
+  background-color: var(--clr-ear-left);
+  color: var(--text-inverse);
+}
