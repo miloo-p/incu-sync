@@ -1,63 +1,123 @@
 :root {
   // ==========================================
-  // 1. AUDIOLOGY CORE
+  // 1. RAW COLOR SCALE
   // ==========================================
-  --clr-ear-right: #ff3355; // Standard: Rot (Rechtes Ohr / Kreis)
+
+  // --- PRIMARY (Cyan / Ear Left) ---
+  --primary-100: #ccf0f6;
+  --primary-200: #99e1ee;
+  --primary-300: #66d2e6;
+  --primary-400: #33c3df;
+  --primary-500: #00b4d8;
+  --primary-600: #009bc0;
+  --primary-700: #007e97;
+  --primary-800: #005a6c;
+  --primary-900: #003641;
+
+  // --- SECONDARY (Red / Ear Right) ---
+  --secondary-100: #ffd6dd;
+  --secondary-200: #ffadbb;
+  --secondary-300: #ff8599;
+  --secondary-400: #ff5c77;
+  --secondary-500: #ff3355;
+  --secondary-600: #e60026;
+  --secondary-700: #b3001d;
+  --secondary-800: #800015;
+  --secondary-900: #4d000c;
+
+  // --- TINTED-GRAY (Emerald Slate) ---
+  --tinted-gray-100: #f0f7f2;
+  --tinted-gray-200: #d2e2d8;
+  --tinted-gray-300: #a6bcaf;
+  --tinted-gray-400: #75867a;
+  --tinted-gray-500: #525e56;
+  --tinted-gray-600: #323e37;
+  --tinted-gray-700: #242d27;
+  --tinted-gray-800: #1b221e;
+  --tinted-gray-900: #121714;
+
+  // --- NEUTRAL (Titanium Steel) ---
+  --neutral-100: #ffffff;
+  --neutral-200: #eff2f4;
+  --neutral-300: #d1d7dc;
+  --neutral-400: #aab1b8;
+  --neutral-500: #848b91;
+  --neutral-600: #5e6469;
+  --neutral-700: #3a3e41;
+  --neutral-800: #232527;
+  --neutral-900: #131415;
+
+  // --- FEEDBACK (Status LEDs) ---
+  --feedback-error: #ff1744;
+  --feedback-warning: #ffaa00;
+  --feedback-info: #00b4d8;
+  --feedback-success: #00e676;
+
+  // ==========================================
+  // 2. SEMANTIC DESIGN TOKENS
+  // ==========================================
+
+  // --- Audiology Core ---
+  --clr-ear-right: var(--secondary-500);
   --clr-ear-right-glow: rgba(255, 51, 85, 0.25);
 
-  --clr-ear-left: #00b4d8; // Standard: Blau/Cyan (Linkes Ohr / Kreuz)
+  --clr-ear-left: var(--primary-500);
   --clr-ear-left-glow: rgba(0, 180, 216, 0.25);
 
-  // ==========================================
-  // 2. HARDWARE SURFACES & DEPTH
-  // ==========================================
-  --surface-chassis: #0b0c0e; // Hintergrund / Rack-Boden
-  --surface-panel: #15171c; // Modul-Gehäuse / Channel-Strips
-  --surface-panel-elevated: #1e2128; // Fader-Knöpfe, Tooltips, Dialoge
-  --surface-recess: #08090a; // Vertiefungen / Fader-Schlitze
+  // --- Hardware Surfaces & Depth ---
+  --surface-chassis: var(--tinted-gray-900);
+  --surface-panel: var(--tinted-gray-800);
+  --surface-panel-elevated: var(--tinted-gray-700);
+  --surface-recess: var(--neutral-900);
 
-  --surface-border-subtle: rgba(255, 255, 255, 0.06);
-  --surface-border-highlight: rgba(255, 255, 255, 0.12);
-  --surface-border-active: rgba(255, 255, 255, 0.25);
+  // --- Borders & Highlights ---
+  --surface-border-subtle: rgba(240, 247, 242, 0.06);
+  --surface-border-highlight: rgba(240, 247, 242, 0.12);
+  --surface-border-active: rgba(240, 247, 242, 0.25);
+
+  // --- Audio Signal & LED Accents ---
+  --led-clip: var(--feedback-error);
+  --led-active: var(--feedback-info);
+  --led-bypass: var(--feedback-warning);
+  --led-safe: var(--feedback-success);
+
+  // --- Typography Colors ---
+  --text-primary: var(--tinted-gray-100);
+  --text-secondary: var(--tinted-gray-300);
+  --text-muted: var(--tinted-gray-400);
+  --text-inverse: var(--tinted-gray-900);
+
+  // --- Inactive / Dead State ---
+  --state-disabled: var(--neutral-500);
 
   // ==========================================
-  // 3. AUDIO SIGNAL & LED ACCENTS
+  // 3. TYPOGRAPHY
   // ==========================================
-  --led-clip: #ff1744; // Peak-/Clipping-Warnung (> 0 dBFS)
-  --led-active: #00e5ff; // Aktiver Signalweg / Biquad-Filter an
-  --led-bypass: #ffaa00; // Live A/B Bypass aktiv (Amber)
-  --led-safe: #00e676; // Dynamischer Headroom im grünen Bereich
-
-  // ==========================================
-  // 4. TYPOGRAPHY
-  // ==========================================
-  --ff-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --ff-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --ff-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ff-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
   --fw-bold: 700;
 
-  --lh-tight: 1.1;
-  --lh-body: 1.5;
+  --lh-tight: 1.3;
+  --lh-body: 1.7;
 
-  // Typographic Scale (Konsequent in REM)
-  --fs-h1: 2rem; // 32px (App Header)
-  --fs-h2: 1.5rem; // 24px (Modul-Titel)
-  --fs-h3: 1.125rem; // 18px (Sektionen)
-  --fs-body: 0.9375rem; // 15px (Standard UI)
-  --fs-small: 0.8125rem; // 13px (Subtexte, Tooltips)
-  --fs-mono-readout: 0.75rem; // 12px (Hz- & dB-Skalen)
+  // Typographic Scale (REM)
+  --fs-d1: 4rem; // 64px
+  --fs-d2: 3rem; // 48px
+  --fs-d3: 1.75rem; // 28px
 
-  // Textfarben
-  --text-primary: #f0f2f5;
-  --text-secondary: #8a909e;
-  --text-muted: #525866;
-  --text-inverse: #0b0c0e;
+  --fs-h1: 1.5rem; // 24px
+  --fs-h2: 1.125rem; // 18px
+
+  --fs-body: 1rem; // 16px
+  --fs-small: 0.875rem; // 14px
+  --fs-mono-readout: 1rem; // 16px
 
   // ==========================================
-  // 5. SPACING (Konsequent in REM)
+  // 4. SPACING (REM)
   // ==========================================
   --space-2xs: 0.125rem; // 2px
   --space-xs: 0.25rem; // 4px
@@ -69,16 +129,16 @@
   --space-3xl: 4rem; // 64px
 
   // ==========================================
-  // 6. BORDER RADIUS (REM)
+  // 5. BORDER RADIUS (REM)
   // ==========================================
-  --radius-xs: 0.125rem; // 2px (Kleine Marker)
-  --radius-sm: 0.25rem; // 4px (Fader-Caps, Buttons)
-  --radius-md: 0.375rem; // 6px (Module, Panels)
-  --radius-lg: 0.5rem; // 8px (Cards, Modals)
-  --radius-pill: 9999px; // Bewusster Maximalwert für runde Toggles
+  --radius-xs: 0.125rem; // 2px
+  --radius-sm: 0.25rem; // 4px
+  --radius-md: 0.375rem; // 6px
+  --radius-lg: 0.5rem; // 8px
+  --radius-pill: 9999px;
 
   // ==========================================
-  // 7. DEPTH & SHADOWS
+  // 6. DEPTH & SHADOWS
   // ==========================================
   --shadow-rack: 0 12px 32px -4px rgba(0, 0, 0, 0.7);
   --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.5);
@@ -86,17 +146,17 @@
   --shadow-recess: inset 0 2px 4px rgba(0, 0, 0, 0.8), inset 0 0 2px rgba(0, 0, 0, 0.6);
 
   // ==========================================
-  // 8. LAYOUT & CONTAINERS (in REM)
+  // 7. LAYOUT & CONTAINERS (REM)
   // ==========================================
   --container-content-md: 85rem;
 }
 
 // ==========================================
-// SCSS BREAKPOINTS (Für Mixins)
+// 8. SCSS BREAKPOINTS (Für Mixins)
 // ==========================================
 $breakpoint-xsm: 410px;
 $breakpoint-sm: 576px;
-$breakpoint-rotate: 622px; // Mobile Landscape für Fader-Panels
+$breakpoint-rotate: 622px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 992px;
 $breakpoint-xl: 1300px;
