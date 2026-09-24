@@ -1,0 +1,60 @@
+@use '../../../../styles/abstracts/mixins' as *;
+
+.hero {
+  min-height: 85dvh;
+  @include flexbox(column, center, center);
+
+  &__wrapper {
+    @include flexbox(column, center, center, 1.5rem);
+    text-align: center;
+  }
+
+  &__pre-headline {
+    letter-spacing: 0.15em;
+    margin-bottom: -2rem;
+  }
+
+  &__headline {
+    font-size: var(--fs-lg);
+    font-weight: 400;
+    margin: 0;
+  }
+
+  &__title {
+    display: block;
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+
+    background: linear-gradient(to right, #ececec 20%, #8f96a0 40%, #8a939e 60%, #ececec 80%);
+
+    background-size: 200% auto;
+
+    color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    animation: textShine 12s ease-in-out infinite;
+  }
+
+  @keyframes textShine {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  &__subheadline {
+    max-width: 65rem;
+  }
+
+  &__cta-group {
+    margin-top: 1rem;
+  }
+}
