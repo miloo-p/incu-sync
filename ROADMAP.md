@@ -67,7 +67,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 **Fokus:** Akustische Perfektionierung durch Einbezug von Kopfhörer-Messwerten und erweiterte Desktop-Routing-Ziele.
 
-### 3.1 AutoEQ-Datenbank-Integration
+### 2.1 AutoEQ-Datenbank-Integration
 
 - [ ] Anbindung an den offenen Datensatz von _AutoEQ_ (Messungen von Harman-, Rtings- oder Oratory1990-Targets).
 - [ ] Suchmaske für tausende Over-Ear- und In-Ear-Kopfhörermodelle.
@@ -75,7 +75,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
       $$\text{Finale Kurve} = \text{Gehörkompensation (dB HL)} + \text{AutoEQ-Hardwarekorrektur}$$
 - [ ] Automatisches Nachjustieren des Pre-Amps auf Basis der kombinierten Gesamtkurve.
 
-### 3.2 Desktop Export Hub (Strategy Pattern)
+### 2.2 Desktop Export Hub (Strategy Pattern)
 
 Erweiterung der Export-Architektur über getrennte Strategy-Klassen:
 
@@ -89,7 +89,7 @@ Erweiterung der Export-Architektur über getrennte Strategy-Klassen:
 
 **Fokus:** Datenspeicherung, Persistenz, Accounts und Bildverarbeitung via Backend.
 
-### 2.1 Backend-Architektur (Python & Django REST Framework)
+### 3.1 Backend-Architektur (Python & Django REST Framework)
 
 - [ ] Entwurf und Bereitstellung einer RESTful API.
 - [ ] Token-basierte Authentifizierung (JWT) für personalisierte Nutzerkonten.
@@ -98,13 +98,13 @@ Erweiterung der Export-Architektur über getrennte Strategy-Klassen:
   - `AudiogramSession` (Historische Messungen mit Zeitstempel, Arzt-Notizen, Timestamp)
   - `FrequencyDataPoint` (Frequenz, Seite, dB HL, Gain)
 
-### 2.2 Gehör-Historie & Verlaufsanalyse
+### 3.2 Gehör-Historie & Verlaufsanalyse
 
 - [ ] Frontend-Dashboard zur Anzeige des Hörverlaufs über mehrere Jahre (Trendanalyse).
 - [ ] Vergleichsansicht zweier historischer Audiogramme (z. B. 2024 vs. 2026).
 - [ ] Warnhinweise bei signifikanten Schwellenwert-Verschlechterungen (medizinischer Hinweis zur Konsultation eines HNO-Arztes).
 
-### 2.3 Computer Vision / OCR-Integration
+### 3.3 Computer Vision / OCR-Integration
 
 - [ ] Datei-Upload (PDF, JPG, PNG) für abfotografierte/gescannte Arztbefunde.
 - [ ] Backend-Pipeline (OpenCV / KI-Vision-Modelle):
