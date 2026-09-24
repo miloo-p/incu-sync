@@ -1,7 +1,10 @@
+@use '../styles/abstracts/mixins' as *;
 .main-content {
+  @include global_content_wrapper();
   flex: 1;
   overflow-y: auto;
-  //   background-color: var(--bg-light);
   display: flex;
   flex-direction: column;
+
+  margin: 0 auto;
 }
