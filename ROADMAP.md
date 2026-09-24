@@ -63,7 +63,29 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 ---
 
-## Phase 2: Full-Stack Expansion & Automation
+## Phase 2: Hardware Compensation & Advanced Hub
+
+**Fokus:** Akustische Perfektionierung durch Einbezug von Kopfhörer-Messwerten und erweiterte Desktop-Routing-Ziele.
+
+### 3.1 AutoEQ-Datenbank-Integration
+
+- [ ] Anbindung an den offenen Datensatz von _AutoEQ_ (Messungen von Harman-, Rtings- oder Oratory1990-Targets).
+- [ ] Suchmaske für tausende Over-Ear- und In-Ear-Kopfhörermodelle.
+- [ ] **Dual-Matrix-Kalkulation:**
+      $$\text{Finale Kurve} = \text{Gehörkompensation (dB HL)} + \text{AutoEQ-Hardwarekorrektur}$$
+- [ ] Automatisches Nachjustieren des Pre-Amps auf Basis der kombinierten Gesamtkurve.
+
+### 3.2 Desktop Export Hub (Strategy Pattern)
+
+Erweiterung der Export-Architektur über getrennte Strategy-Klassen:
+
+- [ ] **Peace Equalizer:** Generierung nativer `.peace`-Preset-Dateien.
+- [ ] **Voicemeeter:** Export von XML-Konfigurationen für das Routing auf isolierte Hardware-Outs (A1/A2), um den Broadcast-Stream sauber zu halten.
+- [ ] **Custom Parametric Hub:** Generischer Export als CSV/JSON zur manuellen Übertragung in DAWs, RME TotalMix oder MiniDSP-Hardware.
+
+---
+
+## Phase 3: Full-Stack Expansion & Automation
 
 **Fokus:** Datenspeicherung, Persistenz, Accounts und Bildverarbeitung via Backend.
 
@@ -93,30 +115,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 ---
 
-## Phase 3: Hardware Compensation & Advanced Hub
-
-**Fokus:** Akustische Perfektionierung durch Einbezug von Kopfhörer-Messwerten und erweiterte Desktop-Routing-Ziele.
-
-### 3.1 AutoEQ-Datenbank-Integration
-
-- [ ] Anbindung an den offenen Datensatz von _AutoEQ_ (Messungen von Harman-, Rtings- oder Oratory1990-Targets).
-- [ ] Suchmaske für tausende Over-Ear- und In-Ear-Kopfhörermodelle.
-- [ ] **Dual-Matrix-Kalkulation:**
-      $$\text{Finale Kurve} = \text{Gehörkompensation (dB HL)} + \text{AutoEQ-Hardwarekorrektur}$$
-- [ ] Automatisches Nachjustieren des Pre-Amps auf Basis der kombinierten Gesamtkurve.
-
-### 3.2 Desktop Export Hub (Strategy Pattern)
-
-Erweiterung der Export-Architektur über getrennte Strategy-Klassen:
-
-- [ ] **Peace Equalizer:** Generierung nativer `.peace`-Preset-Dateien.
-- [ ] **Voicemeeter:** Export von XML-Konfigurationen für das Routing auf isolierte Hardware-Outs (A1/A2), um den Broadcast-Stream sauber zu halten.
-- [ ] **Custom Parametric Hub:** Generischer Export als CSV/JSON zur manuellen Übertragung in DAWs, RME TotalMix oder MiniDSP-Hardware.
-
----
-
 ## 🚫 Scope-Ausschlüsse (Archived Decisions)
 
 - **Keine mobilen EQ-Exporte (Wavelet, Poweramp etc.):** Moderne Hörsysteme kompensieren über Bluetooth (ASHA / MFi) am Smartphone bereits vollautomatisch. Ein zusätzlicher Software-EQ würde zu Doppelverstärkung und Verzerrung führen. Der Fokus bleibt strikt auf unkompensierten Desktop-Kopfhörer-Umgebungen.
 - **Kein Dynamic Layering (Gaming-/Cinematic-Presets):** IncuSync bleibt ein medizinisches Präzisionswerkzeug. Künstliche Bass-Boosts oder Surround-Effekte verwässern den linearen Korrekturansatz.
-- **Kein SSR/SSG:** Vermeidung unnötiger Node.js-Abstraktionsschichten zugunsten performanter, direkter Browser-APIs (Web Audio & Canvas).
