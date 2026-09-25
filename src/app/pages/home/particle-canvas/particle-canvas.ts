@@ -90,12 +90,25 @@ class Particle3D {
         ? 4 * scrollFactor * scrollFactor * scrollFactor
         : 1 - Math.pow(-2 * scrollFactor + 2, 3) / 2;
 
-    // 2. Calculate the theoretical TARGET in this exact frame
-    const targetX = this.chaosX + (this.gridX - this.chaosX) * ease;
-    const targetY = this.chaosY + (waveY - this.chaosY) * ease;
-    const targetZ = this.chaosZ + (this.gridZ - this.chaosZ) * ease;
+    // 2. Leichte Schwebeströme (Float) für den Chaos-Modus berechnen
+    // Die 40 steuert den Radius, die Werte beim time (0.2) die Geschwindigkeit
+    const floatX = Math.sin(this.chaosY * 0.01 + time * 0.4) * 60;
+    const floatY = Math.cos(this.chaosX * 0.015 + time * 0.45) * 40;
+    const floatZ = Math.sin(this.chaosZ * 0.01 + time * 0.25) * 60;
 
-    // 3. Smooth trailing (Lerp on particle level)
+    // Den Float auf die Chaos-Startposition addieren
+    // (klingt durch (1 - ease) sanft ab, je weiter gescrollt wird)
+    const startX = this.chaosX + floatX * (1 - ease);
+    const startY = this.chaosY + floatY * (1 - ease);
+    const startZ = this.chaosZ + floatZ * (1 - ease);
+
+    // 3. Das theoretische ZIEL (Target) in diesem exakten Frame berechnen
+    // Hier nutzen wir jetzt startX/Y/Z statt der statischen chaosX/Y/Z
+    const targetX = startX + (this.gridX - startX) * ease;
+    const targetY = startY + (waveY - startY) * ease;
+    const targetZ = startZ + (this.gridZ - startZ) * ease;
+
+    // 4. Smooth trailing (Lerp on particle level)
     this.currentX += (targetX - this.currentX) * this.inertia;
     this.currentY += (targetY - this.currentY) * this.inertia;
     this.currentZ += (targetZ - this.currentZ) * this.inertia;
@@ -128,9 +141,9 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   private particles: Particle3D[] = [];
 
   // Matrix settings
-  private cols = 120; // Significantly fewer columns (makes the grid narrower)
-  private rows = 240; // More rows for extreme depth backwards
-  private spacing = 5; // Move particles slightly closer together
+  private cols = 150; // Significantly fewer columns (makes the grid narrower)
+  private rows = 150; // More rows for extreme depth backwards
+  private spacing = 7; // Move particles slightly closer together
 
   /**
    * Lifecycle hook: Called after the component view has been initialized.
@@ -167,7 +180,7 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    */
   @HostListener('window:scroll')
   onScroll() {
-    const scrollDistanceForTransition = 600;
+    const scrollDistanceForTransition = 900;
     this.scrollFactor = Math.min(window.scrollY / scrollDistanceForTransition, 1);
   }
 
@@ -178,10 +191,21 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     this.particles = [];
     const chaosSpread = 2500;
 
-    for (let z = 0; z < this.rows; z++) {
-      for (let x = 0; x < this.cols; x++) {
-        const gridX = (x - this.cols / 2) * this.spacing;
-        const gridZ = z * this.spacing;
+    // Prüfen, ob der Bildschirm schmaler als ein Tablet ist (Mobile)
+    const isMobile = window.innerWidth < 768;
+
+    // Raster auf mobilen Geräten halbieren (viertelt die Gesamtanzahl der Partikel)
+    const currentCols = isMobile ? Math.floor(this.cols / 2) : this.cols;
+    const currentRows = isMobile ? Math.floor(this.rows / 2) : this.rows;
+
+    // Abstand auf Mobile leicht erhöhen, damit das Netz optisch ähnlich breit wirkt
+    const currentSpacing = isMobile ? this.spacing * 1.5 : this.spacing;
+
+    for (let z = 0; z < currentRows; z++) {
+      for (let x = 0; x < currentCols; x++) {
+        // Weltkoordinaten mit den dynamischen Werten berechnen
+        const gridX = (x - currentCols / 2) * currentSpacing;
+        const gridZ = z * currentSpacing;
 
         this.particles.push(new Particle3D(gridX, gridZ, chaosSpread));
       }
@@ -192,7 +216,7 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    * The recursive main render loop for continuous canvas updates.
    */
   private startLoop = () => {
-    this.time += 0.002; // Wave speed
+    this.time += 0.004; // Wave speed
     this.update();
     this.draw();
     this.animationFrameId = requestAnimationFrame(this.startLoop);
@@ -215,8 +239,8 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     this.ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2; // Shift wave slightly downwards
+    const centerX = canvas.width / 2 - 250;
+    const centerY = canvas.height / 2 + 200; // Shift wave slightly downwards
 
     // Camera setup
     const focalLength = 500;
@@ -236,7 +260,23 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
       const radius = Math.max(0.1, 1.2 * scale);
 
       // Opacity decreases the further we scroll (from 1.0 in fog to 0.25 in the wave)
-      const densityAlpha = 1.0 - this.scrollFactor * 0.75;
+      let densityAlpha: number;
+
+      if (this.scrollFactor < 0.5) {
+        // Phase 1: Die erste Hälfte des Scroll-Weges (0.0 bis 0.5)
+        // localProgress läuft von 0.0 bis 1.0 in dieser Phase
+        const localProgress = this.scrollFactor * 2;
+
+        // Startet bei 0.4 (40%) und sinkt um 0.2 auf 0.2 (20%)
+        densityAlpha = 0.3 - 0.2 * localProgress;
+      } else {
+        // Phase 2: Die zweite Hälfte des Scroll-Weges (0.5 bis 1.0)
+        // localProgress läuft wieder von 0.0 bis 1.0 für diese Phase
+        const localProgress = (this.scrollFactor - 0.5) * 2;
+
+        // Startet bei 0.2 (20%) und steigt um 0.8 auf 1.0 (100%)
+        densityAlpha = 0.1 + 0.8 * localProgress;
+      }
 
       // Combine density value with depth blur (scale)
       this.ctx.globalAlpha = Math.max(0, Math.min(1, scale * densityAlpha));
