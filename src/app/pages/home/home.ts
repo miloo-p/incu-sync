@@ -3,11 +3,12 @@ import { Hero } from './hero/hero';
 import { AppInterface } from './app-interface/app-interface';
 import { ShareStory } from './share-story/share-story';
 import { Thanks } from './thanks/thanks';
+import { ParticleCanvas } from './particle-canvas/particle-canvas';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [Hero, AppInterface, ShareStory, Thanks],
+  imports: [Hero, AppInterface, ShareStory, Thanks, ParticleCanvas],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })

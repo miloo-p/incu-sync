@@ -1,0 +1,10 @@
+.particle-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1; // Schiebt den Canvas ganz nach hinten
+  pointer-events: none; // Klicks scheinen auf die drunterliegenden Buttons/Fader durch
+  background: transparent; // Wichtig, falls du dem Home-Container eine eigene Farbe gibst
+}
