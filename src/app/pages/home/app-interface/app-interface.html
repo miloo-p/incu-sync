@@ -1,1 +1,60 @@
-<p class="test">app-interface works!</p>
+<section class="interface-container">
+  <div class="channel-toggle">
+    <button
+      [class.active]="eqService.activeChannel === 'right'"
+      (click)="eqService.setChannel('right')"
+    >
+      Rechtes Ohr (O)
+    </button>
+    <button
+      [class.active]="eqService.activeChannel === 'left'"
+      (click)="eqService.setChannel('left')"
+    >
+      Linkes Ohr (X)
+    </button>
+  </div>
+
+  <div class="graph-wrapper">
+    <svg viewBox="0 0 700 400" class="audiogram-svg">
+      <polyline
+        [attr.points]="getPolylinePoints(eqService.leftEarDb)"
+        class="line-left"
+        [class.faded]="eqService.activeChannel === 'right'"
+      />
+
+      <polyline
+        [attr.points]="getPolylinePoints(eqService.rightEarDb)"
+        class="line-right"
+        [class.faded]="eqService.activeChannel === 'left'"
+      />
+
+      <circle
+        *ngFor="let freq of eqService.frequencies; let i = index"
+        [attr.cx]="getXPosition(i)"
+        [attr.cy]="
+          getYPosition(
+            eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
+          )
+        "
+        r="8"
+        class="drag-handle"
+        (mousedown)="startDrag($event, i)"
+      />
+    </svg>
+  </div>
+
+  <div class="manual-input-grid">
+    <div class="input-column" *ngFor="let freq of eqService.frequencies; let i = index">
+      <label>{{ freq < 1000 ? freq : freq / 1000 + 'k' }}</label>
+      <input
+        type="number"
+        min="0"
+        max="120"
+        [value]="
+          eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
+        "
+        (input)="onInputChange(i, $event)"
+      />
+    </div>
+  </div>
+</section>

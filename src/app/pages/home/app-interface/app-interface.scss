@@ -1,3 +1,151 @@
-.test {
-  height: 1500px;
+// app-interface.scss
+
+.interface-container {
+  position: relative;
+  z-index: 10;
+  max-width: 700px; // Etwas schmaler, damit er gut an die Seite passt
+
+  // margin-left: auto drückt den Container ganz nach rechts
+  // margin-right: 5vw lässt einen kleinen, eleganten Abstand zum Bildschirmrand
+  margin: 0 0 0 auto;
+
+  padding: 2rem;
+  background: rgba(20, 20, 20, 0.6);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// 1. Toggle Buttons
+.channel-toggle {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+
+  button {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &.active {
+      background: white;
+      color: black;
+      font-weight: bold;
+    }
+  }
+}
+
+// 2. SVG Graph Layout
+.graph-wrapper {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+
+  .audiogram-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+
+    // Standardfarbe in der HNO-Medizin: Rechts = Rot
+    .line-right {
+      fill: none;
+      stroke: #ff4757;
+      stroke-width: 3;
+      transition: opacity 0.3s ease;
+    }
+
+    // Standardfarbe in der HNO-Medizin: Links = Blau
+    .line-left {
+      fill: none;
+      stroke: #1e90ff;
+      stroke-width: 3;
+      stroke-dasharray: 8 4; // Gestrichelt, wie in den medizinischen Vorlagen
+      transition: opacity 0.3s ease;
+    }
+
+    .faded {
+      opacity: 0.15;
+    }
+
+    .drag-handle {
+      fill: white;
+      stroke: rgba(255, 255, 255, 0.2);
+      stroke-width: 8; // Extra dicker Rand macht das Greifen mit der Maus viel leichter
+      cursor: grab;
+      transition: transform 0.1s ease;
+
+      // NEU: Die beiden Zeilen beheben das Zucken
+      transform-origin: center;
+      transform-box: fill-box;
+
+      &:hover {
+        transform: scale(1.5);
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+    }
+  }
+}
+
+// 3. Input Grid Layout (wandelt die vertikale Liste[cite: 5] in eine horizontale Reihe um)
+.manual-input-grid {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 35px; // Entspricht in etwa dem PaddingX aus dem TypeScript, damit Inputs unter den SVG-Punkten liegen
+
+  .input-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+
+    label {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input {
+      width: 50px;
+      padding: 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 6px;
+      text-align: center;
+      font-family: monospace;
+      font-size: 1rem;
+
+      // Entfernt die störenden Browser-Pfeile im Input-Feld
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      -moz-appearance: textfield;
+
+      &:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+    }
+  }
 }
