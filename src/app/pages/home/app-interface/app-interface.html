@@ -1,17 +1,17 @@
 <section class="interface-container">
-  <div class="channel-toggle">
-    <button
-      [class.active]="eqService.activeChannel === 'right'"
-      (click)="eqService.setChannel('right')"
-    >
-      Rechtes Ohr (O)
-    </button>
-    <button
-      [class.active]="eqService.activeChannel === 'left'"
-      (click)="eqService.setChannel('left')"
-    >
-      Linkes Ohr (X)
-    </button>
+  <div class="manual-input-grid">
+    <div class="input-column" *ngFor="let freq of eqService.frequencies; let i = index">
+      <label>{{ freq < 1000 ? freq : freq / 1000 + 'k' }}</label>
+      <input
+        type="number"
+        min="0"
+        max="120"
+        [value]="
+          eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
+        "
+        (input)="onInputChange(i, $event)"
+      />
+    </div>
   </div>
 
   <div class="graph-wrapper">
@@ -43,18 +43,18 @@
     </svg>
   </div>
 
-  <div class="manual-input-grid">
-    <div class="input-column" *ngFor="let freq of eqService.frequencies; let i = index">
-      <label>{{ freq < 1000 ? freq : freq / 1000 + 'k' }}</label>
-      <input
-        type="number"
-        min="0"
-        max="120"
-        [value]="
-          eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
-        "
-        (input)="onInputChange(i, $event)"
-      />
-    </div>
+  <div class="channel-toggle">
+    <button
+      [class.active]="eqService.activeChannel === 'right'"
+      (click)="eqService.setChannel('right')"
+    >
+      Rechtes Ohr (O)
+    </button>
+    <button
+      [class.active]="eqService.activeChannel === 'left'"
+      (click)="eqService.setChannel('left')"
+    >
+      Linkes Ohr (X)
+    </button>
   </div>
 </section>
