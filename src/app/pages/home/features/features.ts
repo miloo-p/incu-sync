@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { FeatureCard } from './feature-card/feature-card';
 
 @Component({
   selector: 'app-features',
-  imports: [],
+  imports: [FeatureCard],
   templateUrl: './features.html',
   styleUrl: './features.scss',
 })
