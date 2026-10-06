@@ -1,0 +1,11 @@
+.feature-card {
+  height: 15rem;
+  aspect-ratio: 1 / 1;
+
+  border-radius: var(--radius-sm);
+
+  background: var(--tinted-gray-800);
+  border: solid 2px var(--tinted-gray-500);
+
+  box-shadow: var(--shadow-panel);
+}
