@@ -5,7 +5,32 @@ import {
   AfterViewInit,
   OnDestroy,
   HostListener,
+  inject,
 } from '@angular/core';
+import { EqCalc } from '../../../core/services/eq-calc';
+
+/** Number of gaps between the 7 audiogram frequency bands. */
+const FREQ_SEGMENTS = 6;
+
+/** Upper bound of the audiogram scale in dB HL. */
+const MAX_DB = 120;
+
+/** Maximum terrain elevation in world units, reached at MAX_DB. */
+const CURVE_AMPLITUDE = 300;
+
+/** Normalized depth (0 = front, 1 = back) of the right ear ridge crest. */
+const RIGHT_EAR_DEPTH = 0.2;
+
+/** Normalized depth (0 = front, 1 = back) of the left ear ridge crest. */
+const LEFT_EAR_DEPTH = 0.5;
+
+/** Normalized distance from a ridge crest to where its terrain flattens out. */
+const EAR_RIDGE_WIDTH = 0.2;
+
+/** Eases a 0–1 value along an S-curve (smooth start and end). */
+function smoothstep(t: number): number {
+  return t * t * (3 - 2 * t);
+}
 
 /**
  * Represents an individual 3D particle operating within an interpolated coordinate system,
@@ -17,6 +42,18 @@ class Particle3D {
 
   /** Target depth position within the ordered grid. */
   gridZ: number;
+
+  /** Index of the left neighbouring frequency band (0–5). */
+  freqIndex: number;
+
+  /** Fraction of the way to right neighbouring frequency band (0-1). */
+  freqFrac: number;
+
+  /** Influence of the right ear curve at this depth (0–1). */
+  rightEarWeight: number;
+
+  /** Influence of the left ear curve at this depth (0–1). */
+  leftEarWeight: number;
 
   /** Stochastic origin offset along the horizontal axis. */
   chaosX: number;
@@ -55,9 +92,20 @@ class Particle3D {
    * @param gridZ - Grid-relative depth target coordinate.
    * @param chaosSpread - Maximum radial scattering distance for initial positioning.
    */
-  constructor(gridX: number, gridZ: number, chaosSpread: number) {
+  constructor(gridX: number, gridZ: number, chaosSpread: number, normX: number, normZ: number) {
     this.gridX = gridX;
     this.gridZ = gridZ;
+
+    const freqPos = normX * FREQ_SEGMENTS;
+    this.freqIndex = Math.min(Math.floor(freqPos), FREQ_SEGMENTS - 1);
+    this.freqFrac = smoothstep(freqPos - this.freqIndex);
+
+    this.rightEarWeight = smoothstep(
+      Math.max(0, 1 - Math.abs(normZ - RIGHT_EAR_DEPTH) / EAR_RIDGE_WIDTH),
+    );
+    this.leftEarWeight = smoothstep(
+      Math.max(0, 1 - Math.abs(normZ - LEFT_EAR_DEPTH) / EAR_RIDGE_WIDTH),
+    );
 
     this.chaosX = (Math.random() - 0.5) * chaosSpread;
     this.chaosY = (Math.random() - 0.5) * chaosSpread;
@@ -77,11 +125,22 @@ class Particle3D {
    * @param scrollFactor - Normalized page scroll progress ranging from 0.0 to 1.0.
    * @param time - Continuous elapsed time counter governing trigonometric wave movements.
    */
-  update(scrollFactor: number, time: number): void {
-    const wave1 = Math.sin(this.gridX * 0.02 + time * 0.8) * 12;
-    const wave2 = Math.cos(this.gridZ * 0.03 + time * 1.1) * 10;
+  update(scrollFactor: number, time: number, rightDb: number[], leftDb: number[]): void {
+    const rightLeftPost = rightDb[this.freqIndex];
+    const rightRightPost = rightDb[this.freqIndex + 1];
+    const rightHere = rightLeftPost + (rightRightPost - rightLeftPost) * this.freqFrac;
+
+    const leftLeftPost = leftDb[this.freqIndex];
+    const leftRightPost = leftDb[this.freqIndex + 1];
+    const leftHere = leftLeftPost + (leftRightPost - leftLeftPost) * this.freqFrac;
+
+    const curveDb = rightHere * this.rightEarWeight + leftHere * this.leftEarWeight;
+    const curveY = -(curveDb / MAX_DB) * CURVE_AMPLITUDE;
+
+    const wave1 = Math.sin(this.gridX * 0.005 + time * 0.2) * 6;
+    const wave2 = Math.cos(this.gridZ * 0.005 + time * 0.5) * 2;
     const wave3 = Math.sin((this.gridX - this.gridZ) * 0.015 + time * 1.4) * 8;
-    const waveY = wave1 + wave2 + wave3;
+    const waveY = wave1 + wave2 + wave3 + curveY;
 
     const ease =
       scrollFactor < 0.5
@@ -121,6 +180,7 @@ class Particle3D {
   styleUrl: './particle-canvas.scss',
 })
 export class ParticleCanvas implements AfterViewInit, OnDestroy {
+  private eqService = inject(EqCalc);
   /** DOM element reference pointing to the native HTML5 rendering canvas. */
   @ViewChild('particleCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -215,10 +275,12 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const currentSpacing = isMobile ? this.spacing * 1.5 : this.spacing;
 
     for (let z = 0; z < currentRows; z++) {
+      const normZ = z / (currentRows - 1);
       for (let x = 0; x < currentCols; x++) {
         const gridX = (x - currentCols / 2) * currentSpacing;
+        const normX = x / (currentCols - 1);
         const gridZ = z * currentSpacing;
-        this.particles.push(new Particle3D(gridX, gridZ, chaosSpread));
+        this.particles.push(new Particle3D(gridX, gridZ, chaosSpread, normX, normZ));
       }
     }
   }
@@ -237,7 +299,9 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    * Steps the state of each particle forward and sorts instances back-to-front by Z-depth.
    */
   private update(): void {
-    this.particles.forEach((p) => p.update(this.scrollFactor, this.time));
+    this.particles.forEach((p) =>
+      p.update(this.scrollFactor, this.time, this.eqService.rightEarDb, this.eqService.leftEarDb),
+    );
     this.particles.sort((a, b) => b.z - a.z);
   }
 
