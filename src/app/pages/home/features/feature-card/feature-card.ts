@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { FeatureItem } from '../../../../models/interfaces';
 
 @Component({
   selector: 'app-feature-card',
@@ -6,4 +7,6 @@ import { Component } from '@angular/core';
   templateUrl: './feature-card.html',
   styleUrl: './feature-card.scss',
 })
-export class FeatureCard {}
+export class FeatureCard {
+  feature = input.required<FeatureItem>();
+}

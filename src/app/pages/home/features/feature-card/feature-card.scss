@@ -1,6 +1,11 @@
+@use '../../../../../styles/abstracts/mixins' as *;
+
 .feature-card {
-  height: 15rem;
-  aspect-ratio: 1 / 1;
+  @include flexbox(column, center, center, 1rem);
+  max-height: 15rem;
+  max-width: 18rem;
+
+  padding: var(--space-lg) var(--space-md);
 
   border-radius: var(--radius-sm);
 
@@ -8,4 +13,6 @@
   border: solid 2px var(--tinted-gray-500);
 
   box-shadow: var(--shadow-panel);
+
+  text-align: center;
 }

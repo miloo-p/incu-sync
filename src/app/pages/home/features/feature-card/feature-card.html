@@ -1,1 +1,7 @@
-<article class="feature-card"></article>
+<article class="feature-card">
+  @if (feature().imagePath) {
+    <img [src]="feature().imagePath" [alt]="feature().title" />
+  }
+  <h2>{{ feature().title }}</h2>
+  <p>{{ feature().description }}</p>
+</article>

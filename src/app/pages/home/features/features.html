@@ -1,8 +1,7 @@
 <section class="feature">
   <div class="feature__wrapper">
-    <app-feature-card class="feature__card"></app-feature-card>
-    <app-feature-card class="feature__card"></app-feature-card>
-    <app-feature-card class="feature__card"></app-feature-card>
-    <app-feature-card class="feature__card"></app-feature-card>
+    @for (feature of displayFeatures; track feature.title) {
+      <app-feature-card class="feature__card" [feature]="feature"></app-feature-card>
+    }
   </div>
 </section>
