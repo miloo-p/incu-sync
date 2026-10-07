@@ -1,17 +1,19 @@
 <section class="interface-container">
   <div class="manual-input-grid">
-    <div class="input-column" *ngFor="let freq of eqService.frequencies; let i = index">
-      <label>{{ freq < 1000 ? freq : freq / 1000 + 'k' }}</label>
-      <input
-        type="number"
-        min="0"
-        max="120"
-        [value]="
-          eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
-        "
-        (input)="onInputChange(i, $event)"
-      />
-    </div>
+    @for (freq of eqService.frequencies; track freq; let i = $index) {
+      <div class="input-column">
+        <label>{{ freq < 1000 ? freq : freq / 1000 + 'k' }}</label>
+        <input
+          type="number"
+          min="0"
+          max="120"
+          [value]="
+            eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
+          "
+          (input)="onInputChange(i, $event)"
+        />
+      </div>
+    }
   </div>
 
   <div class="graph-wrapper">
@@ -28,18 +30,19 @@
         [class.faded]="eqService.activeChannel === 'left'"
       />
 
-      <circle
-        *ngFor="let freq of eqService.frequencies; let i = index"
-        [attr.cx]="getXPosition(i)"
-        [attr.cy]="
-          getYPosition(
-            eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
-          )
-        "
-        r="8"
-        class="drag-handle"
-        (mousedown)="startDrag($event, i)"
-      />
+      @for (freq of eqService.frequencies; track freq; let i = $index) {
+        <circle
+          [attr.cx]="getXPosition(i)"
+          [attr.cy]="
+            getYPosition(
+              eqService.activeChannel === 'right' ? eqService.rightEarDb[i] : eqService.leftEarDb[i]
+            )
+          "
+          r="8"
+          class="drag-handle"
+          (mousedown)="startDrag($event, i)"
+        />
+      }
     </svg>
   </div>
 

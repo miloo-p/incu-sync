@@ -1,11 +1,10 @@
 import { Component, HostListener, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { EqCalc } from '../../../core/services/eq-calc';
 
 @Component({
   selector: 'app-app-interface',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './app-interface.html',
   styleUrl: './app-interface.scss',
 })
