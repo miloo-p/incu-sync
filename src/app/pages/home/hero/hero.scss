@@ -13,7 +13,7 @@
     &::before {
       content: '';
       position: absolute;
-      inset: -50rem -90rem;
+      inset: -50rem clamp(-100rem, calc(54rem - 120vw), -10rem);
       z-index: -1;
       background: radial-gradient(
         closest-side,
