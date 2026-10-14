@@ -132,6 +132,9 @@ const PULSE_WOBBLE_RING_PHASE = 0.05;
 /** Kick below which a ring is treated as settled, in px. */
 const PULSE_KICK_MIN = 0.05;
 
+/** Highest device pixel ratio the wave canvas renders at; the faint, masked lines need no more. */
+const MAX_PIXEL_RATIO = 1.5;
+
 /** Value below which an eased effect is treated as off. */
 const EFFECT_EPSILON = 0.001;
 
@@ -328,7 +331,7 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
   resizeCanvas(): void {
     if (!this.ctx) return;
     const canvas = this.canvasRef.nativeElement;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
     canvas.width = canvas.clientWidth * dpr;
     canvas.height = canvas.clientHeight * dpr;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -666,6 +669,7 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
   /**
    * Builds the path of one elliptic ring. Points near the cursor are pushed away with a jitter;
    * a pulse kick lets the whole ring wobble in and out with the same jitter.
+   * Undisturbed rings use a native ellipse instead of sampled points.
    *
    * @param r - Horizontal radius in px.
    * @param kick - Current wobble amplitude in px from a CTA pulse.
@@ -689,6 +693,11 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
         : 0;
 
     const path = new Path2D();
+    if (!wobble && !this.isNearPointer(r, cx, cy, aspect)) {
+      path.ellipse(cx, cy, r, r / aspect, 0, 0, Math.PI * 2);
+      return path;
+    }
+
     for (let i = 0; i <= RING_SEGMENTS; i++) {
       const angle = (i / RING_SEGMENTS) * Math.PI * 2;
       const jitter =
@@ -715,5 +724,22 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
       else path.lineTo(x, y);
     }
     return path;
+  }
+
+  /**
+   * Checks whether any point of a ring may lie within {@link DISTURB_RADIUS} of the cursor.
+   * Scaling the vertical axis by `aspect` turns the ellipse into a circle and stretches distances
+   * by at most `max(1, aspect)`, so a ring farther than the radius times that factor is undisturbed.
+   *
+   * @param r - Horizontal radius of the ring in px.
+   * @param cx - Horizontal centre of the canvas in px.
+   * @param cy - Vertical centre of the canvas in px.
+   * @param aspect - Canvas width divided by height.
+   * @returns `true` if the cursor effects can reach the ring.
+   */
+  private isNearPointer(r: number, cx: number, cy: number, aspect: number): boolean {
+    if (this.glow <= EFFECT_EPSILON) return false;
+    const pointerRadius = Math.hypot(this.pointer.x - cx, (this.pointer.y - cy) * aspect);
+    return Math.abs(pointerRadius - r) < DISTURB_RADIUS * Math.max(1, aspect);
   }
 }
