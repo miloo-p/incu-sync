@@ -27,6 +27,12 @@ const LEFT_EAR_DEPTH = 0.5;
 /** Normalized distance from a ridge crest to where its terrain flattens out. */
 const EAR_RIDGE_WIDTH = 0.2;
 
+/** Particles with a larger radius in px are drawn as circles; smaller ones as squares, which look the same. */
+const CIRCLE_MIN_RADIUS = 1.5;
+
+/** Number of brightness steps particles are grouped into, so each step needs only one fill call. */
+const ALPHA_STEPS = 32;
+
 /** Eases a 0–1 value along an S-curve (smooth start and end). */
 function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
@@ -206,6 +212,12 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   /** Internal monotonic tick counter tracking wave phase progression. */
   private time: number = 0;
 
+  /** Whether the user prefers reduced motion; the ambient movement then stands still. */
+  private reducedMotion = false;
+
+  /** Whether the canvas has been cleared after fading out, so idle frames can skip all work. */
+  private cleared = false;
+
   /** Collection of allocated active 3D particle entities. */
   private particles: Particle3D[] = [];
 
@@ -225,6 +237,7 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
+    this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     this.resizeCanvas();
     this.initParticles();
     this.startLoop();
@@ -293,28 +306,38 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Recursive animation routine driving coordinate mutation, depth sorting, and rendering.
+   * Recursive animation routine driving coordinate mutation and rendering.
+   * While fully faded out, the canvas is cleared once and all further work is skipped.
    */
   private startLoop = (): void => {
-    this.time += 0.004;
-    this.update();
-    this.draw();
+    if (this.fadeOpacity > 0) {
+      if (!this.reducedMotion) this.time += 0.004;
+      this.update();
+      this.draw();
+      this.cleared = false;
+    } else if (!this.cleared) {
+      this.draw();
+      this.cleared = true;
+    }
     this.animationFrameId = requestAnimationFrame(this.startLoop);
   };
 
   /**
-   * Steps the state of each particle forward and sorts instances back-to-front by Z-depth.
+   * Steps the state of each particle forward.
    */
   private update(): void {
     this.particles.forEach((p) =>
       p.update(this.scrollFactor, this.time, this.eqService.rightEarDb, this.eqService.leftEarDb),
     );
-    this.particles.sort((a, b) => b.z - a.z);
   }
 
   /**
    * Projects 3D spatial points onto the 2D surface using perspective division
    * and executes draw operations based on distance and visual density thresholds.
+   *
+   * Particles are grouped into {@link ALPHA_STEPS} brightness steps with one path and one fill
+   * per step. No depth sorting is needed: all particles share one colour and only differ in
+   * opacity, so the blended result does not depend on the draw order.
    */
   private draw(): void {
     const canvas = this.canvasRef.nativeElement;
@@ -329,34 +352,41 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
 
     this.ctx.fillStyle = 'rgba(236, 236, 236, 0.9)';
 
-    this.particles.forEach((p) => {
+    const progress = easeTransition(this.scrollFactor);
+    const densityAlpha =
+      progress < 0.5 ? 0.3 - 0.2 * (progress * 2) : 0.1 + 0.8 * ((progress - 0.5) * 2);
+
+    const steps = Array.from({ length: ALPHA_STEPS }, () => new Path2D());
+    const used = new Array<boolean>(ALPHA_STEPS).fill(false);
+
+    for (const p of this.particles) {
       const zPos = p.z + cameraZ;
-      if (zPos <= 0) return;
+      if (zPos <= 0) continue;
 
       const scale = focalLength / zPos;
+      const alpha = Math.min(1, scale * densityAlpha);
+      if (alpha <= 0) continue;
+
       const screenX = centerX + p.x * scale;
       const screenY = centerY + p.y * scale - p.z * 0.3;
       const radius = Math.max(0.1, 1.2 * scale);
 
-      const progress = easeTransition(this.scrollFactor);
-      let densityAlpha: number;
-      if (progress < 0.5) {
-        const localProgress = progress * 2;
-        densityAlpha = 0.3 - 0.2 * localProgress;
-      } else {
-        const localProgress = (progress - 0.5) * 2;
-        densityAlpha = 0.1 + 0.8 * localProgress;
-      }
+      const step = Math.min(ALPHA_STEPS - 1, Math.floor(alpha * ALPHA_STEPS));
+      const path = steps[step];
+      used[step] = true;
 
-      this.ctx.globalAlpha = Math.max(0, Math.min(1, scale * densityAlpha)) * this.fadeOpacity;
-
-      if (this.scrollFactor < 0.005 || radius > 3.0) {
-        this.ctx.beginPath();
-        this.ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
-        this.ctx.fill();
+      if (radius > CIRCLE_MIN_RADIUS) {
+        path.moveTo(screenX + radius, screenY);
+        path.arc(screenX, screenY, radius, 0, Math.PI * 2);
       } else {
-        this.ctx.fillRect(screenX - radius, screenY - radius, radius * 2, radius * 2);
+        path.rect(screenX - radius, screenY - radius, radius * 2, radius * 2);
       }
+    }
+
+    steps.forEach((path, step) => {
+      if (!used[step]) return;
+      this.ctx.globalAlpha = ((step + 0.5) / ALPHA_STEPS) * this.fadeOpacity;
+      this.ctx.fill(path);
     });
 
     this.ctx.globalAlpha = 1;
