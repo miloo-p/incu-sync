@@ -33,6 +33,16 @@ function smoothstep(t: number): number {
 }
 
 /**
+ * Eases the scroll progress of the cloud-to-grid transition: barely moves at first, then fast.
+ *
+ * @param t - Scroll progress from 0 to 1.
+ * @returns The eased progress from 0 to 1.
+ */
+function easeTransition(t: number): number {
+  return t ** 4;
+}
+
+/**
  * Represents an individual 3D particle operating within an interpolated coordinate system,
  * transitioning smoothly from a randomized chaos cloud to an undulating grid structure.
  */
@@ -142,10 +152,7 @@ class Particle3D {
     const wave3 = Math.sin((this.gridX - this.gridZ) * 0.015 + time * 1.4) * 8;
     const waveY = wave1 + wave2 + wave3 + curveY;
 
-    const ease =
-      scrollFactor < 0.5
-        ? 4 * scrollFactor * scrollFactor * scrollFactor
-        : 1 - Math.pow(-2 * scrollFactor + 2, 3) / 2;
+    const ease = easeTransition(scrollFactor);
 
     const floatX = Math.sin(this.chaosY * 0.01 + time * 0.4) * 60;
     const floatY = Math.cos(this.chaosX * 0.015 + time * 0.45) * 40;
@@ -251,8 +258,8 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const scrollDistanceForTransition = 900;
     this.scrollFactor = Math.min(scrollY / scrollDistanceForTransition, 1);
 
-    const fadeStart = 1200;
-    const fadeEnd = fadeStart + 400;
+    const fadeStart = 1350;
+    const fadeEnd = 1500;
 
     if (scrollY <= fadeStart) {
       this.fadeOpacity = 1;
@@ -331,12 +338,13 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
       const screenY = centerY + p.y * scale - p.z * 0.3;
       const radius = Math.max(0.1, 1.2 * scale);
 
+      const progress = easeTransition(this.scrollFactor);
       let densityAlpha: number;
-      if (this.scrollFactor < 0.5) {
-        const localProgress = this.scrollFactor * 2;
+      if (progress < 0.5) {
+        const localProgress = progress * 2;
         densityAlpha = 0.3 - 0.2 * localProgress;
       } else {
-        const localProgress = (this.scrollFactor - 0.5) * 2;
+        const localProgress = (progress - 0.5) * 2;
         densityAlpha = 0.1 + 0.8 * localProgress;
       }
 
