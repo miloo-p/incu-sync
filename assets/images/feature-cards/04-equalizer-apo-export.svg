@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="100" viewBox="40 310 496 100" fill="none">
+<style>
+  /* Farben hier ändern – oder bei Inline-SVG per CSS-Variable überschreiben (z. B. --fc-accent) */
+  .s-accent{stroke:var(--fc-accent,#7fa595)} .f-accent{fill:var(--fc-accent,#7fa595)}
+  .s-right{stroke:var(--fc-right,#d0645a)} .f-right{fill:var(--fc-right,#d0645a)}
+  .s-left{stroke:var(--fc-left,#6f9fe0)} .f-left{fill:var(--fc-left,#6f9fe0)}
+  .s-mark{stroke:var(--fc-mark,#e8eeec)} .f-mark{fill:var(--fc-mark,#e8eeec)}
+  .s-muted{stroke:var(--fc-muted,#8a948f)} .f-muted{fill:var(--fc-muted,#8a948f)}
+  .s-bg{stroke:var(--fc-bg,#0a100e)} .f-bg{fill:var(--fc-bg,#0a100e)}
+</style>
+<path class="s-accent" d="M78.3 379.7 A25 25 0 1 1 113.7 379.7 M174.3 379.7 A25 25 0 1 1 209.7 379.7 M270.3 379.7 A25 25 0 1 1 305.7 379.7 M366.3 379.7 A25 25 0 1 1 401.7 379.7 M462.3 379.7 A25 25 0 1 1 497.7 379.7" stroke-opacity="0.25" stroke-width="2" stroke-linecap="round"/>
+<path class="s-accent" d="M78.3 379.7 A25 25 0 0 1 79.8 343.0 M174.3 379.7 A25 25 0 0 1 203.3 339.7 M270.3 379.7 A25 25 0 0 1 282.2 337.7 M366.3 379.7 A25 25 0 1 1 408.7 358.1 M462.3 379.7 A25 25 0 1 1 498.8 345.5" stroke-width="2" stroke-linecap="round"/>
+<path class="f-bg s-mark" d="M80 362 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0 M176 362 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0 M272 362 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0 M368 362 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0 M464 362 a16 16 0 1 0 32 0 a16 16 0 1 0 -32 0" stroke-opacity="0.8" stroke-width="1.5"/>
+<path class="s-mark" d="M92.8 358.2 L88.2 352.9 M194.3 357.5 L197.4 351.3 M286.8 357.1 L285.2 350.3 M388.9 361.2 L395.9 360.1 M483.8 358.7 L489.0 354.1" stroke-width="2" stroke-linecap="round"/>
+</svg>
