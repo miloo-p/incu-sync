@@ -1,5 +1,6 @@
 <section class="hero">
   <div class="hero__wrapper">
+    <app-hero-waves [ctaActive]="ctaActive()" />
     <span class="hero__pre-headline">UNOFFICIAL EQUALIZER APO UTILITY</span>
     <h1 class="hero__headline">
       <span class="hero__title">INCUSYNC</span> Bring back the details you didn't know you lost.
@@ -10,7 +11,15 @@
       giving you back the full spectrum of your desktop audio.
     </p>
     <div class="hero__cta-group">
-      <button class="btn-primary">Reclaim Your Sound</button>
+      <button
+        class="btn-primary"
+        (pointerenter)="ctaActive.set(true)"
+        (pointerleave)="ctaActive.set(false)"
+        (focus)="ctaActive.set(true)"
+        (blur)="ctaActive.set(false)"
+      >
+        <span>Reclaim Your Sound</span>
+      </button>
     </div>
   </div>
 </section>
