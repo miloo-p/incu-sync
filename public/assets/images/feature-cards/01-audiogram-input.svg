@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="100" viewBox="40 310 496 100" fill="none">
+<style>
+  .s-accent{stroke:var(--fc-accent,#7fa595)} .f-accent{fill:var(--fc-accent,#7fa595)}
+  .s-right{stroke:var(--fc-right,#d0645a)} .f-right{fill:var(--fc-right,#d0645a)}
+  .s-left{stroke:var(--fc-left,#6f9fe0)} .f-left{fill:var(--fc-left,#6f9fe0)}
+  .s-mark{stroke:var(--fc-mark,#e8eeec)} .f-mark{fill:var(--fc-mark,#e8eeec)}
+  .s-muted{stroke:var(--fc-muted,#8a948f)} .f-muted{fill:var(--fc-muted,#8a948f)}
+  .s-bg{stroke:var(--fc-bg,#0a100e)} .f-bg{fill:var(--fc-bg,#0a100e)}
+</style>
+<rect class="f-accent" x="48" y="316" width="480" height="24" fill-opacity="0.08"/>
+<path class="s-accent" d="M248 316 V406 M328 316 V406 M408 316 V406 M488 316 V406" stroke-opacity="0.12" stroke-width="1" stroke-dasharray="2 3"/>
+<path class="s-accent" d="M128 316 V406 M208 316 V406 M288 316 V406 M368 316 V406 M448 316 V406 M48 328 H528 M48 340 H528 M48 352 H528 M48 364 H528 M48 376 H528 M48 388 H528 M48 400 H528" stroke-opacity="0.22" stroke-width="1"/>
+<path class="s-accent" d="M48 328 V316 H60 M516 316 H528 V328 M48 394 V406 H60 M516 406 H528 V394" stroke-opacity="0.6" stroke-width="1"/>
+<path class="s-right" d="M48 328.0 L128 334.0 L208 340.0 L288 352.0 L368 370.0 L448 388.0 L528 400.0" stroke-width="1.5" stroke-linejoin="round"/>
+<path class="f-bg s-right" d="M43 328 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M123 334 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M203 340 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M283 352 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M363 370 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M443 388 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M523 400 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0" stroke-width="2"/>
+<path class="s-mark" d="M368 352 V388 M350 370 H360 M376 370 H386" stroke-opacity="0.8" stroke-width="1"/>
+</svg>

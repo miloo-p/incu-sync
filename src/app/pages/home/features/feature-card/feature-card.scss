@@ -1,18 +1,38 @@
 @use '../../../../../styles/abstracts/mixins' as *;
 
 .feature-card {
-  @include flexbox(column, center, center, 1rem);
-  max-height: 15rem;
-  max-width: 18rem;
+  @include flexbox(column, flex-end, center, 1rem);
+  min-height: 22rem;
+  max-width: 20rem;
 
   padding: var(--space-lg) var(--space-md);
 
   border-radius: var(--radius-sm);
 
-  background: var(--tinted-gray-800);
-  border: solid 2px var(--tinted-gray-500);
+  position: relative;
 
-  box-shadow: var(--shadow-panel);
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--tinted-gray-800) 80%, transparent) 70%,
+    transparent
+  );
 
   text-align: center;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: solid 2px var(--tinted-gray-500);
+    border-top: none;
+    border-radius: inherit;
+    pointer-events: none;
+
+    mask-image: linear-gradient(to top, #000 60%, transparent 90%);
+  }
+
+  img {
+    width: 100%;
+    height: auto;
+  }
 }

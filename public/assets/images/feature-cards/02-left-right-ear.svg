@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="100" viewBox="40 310 496 100" fill="none">
+<style>
+  /* Farben hier ändern – oder bei Inline-SVG per CSS-Variable überschreiben (z. B. --fc-accent) */
+  .s-accent{stroke:var(--fc-accent,#7fa595)} .f-accent{fill:var(--fc-accent,#7fa595)}
+  .s-right{stroke:var(--fc-right,#d0645a)} .f-right{fill:var(--fc-right,#d0645a)}
+  .s-left{stroke:var(--fc-left,#6f9fe0)} .f-left{fill:var(--fc-left,#6f9fe0)}
+  .s-mark{stroke:var(--fc-mark,#e8eeec)} .f-mark{fill:var(--fc-mark,#e8eeec)}
+  .s-muted{stroke:var(--fc-muted,#8a948f)} .f-muted{fill:var(--fc-muted,#8a948f)}
+  .s-bg{stroke:var(--fc-bg,#0a100e)} .f-bg{fill:var(--fc-bg,#0a100e)}
+</style>
+<path class="f-left" d="M288 330 L240 336 L192 344 L144 356 L96 370 L48 384 L48 330 Z" fill-opacity="0.1"/>
+<path class="f-right" d="M288 330 L336 338 L384 350 L432 366 L480 384 L528 400 L528 330 Z" fill-opacity="0.1"/>
+<line class="s-accent" x1="48" y1="330" x2="528" y2="330" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="2 4"/>
+<line class="s-accent" x1="288" y1="340" x2="288" y2="404" stroke-opacity="0.35" stroke-width="1" stroke-dasharray="2 4"/>
+<path class="s-left" d="M280 330 L240 336 L192 344 L144 356 L96 370 L48 384" stroke-width="1.5" stroke-dasharray="5 4"/>
+<path class="s-left" d="M235 331 L245 341 M245 331 L235 341 M187 339 L197 349 M197 339 L187 349 M139 351 L149 361 M149 351 L139 361 M91 365 L101 375 M101 365 L91 375 M43 379 L53 389 M53 379 L43 389" stroke-width="2" stroke-linecap="round"/>
+<path class="s-right" d="M296 330 L336 338 L384 350 L432 366 L480 384 L528 400" stroke-width="1.5"/>
+<path class="f-bg s-right" d="M331 338 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M379 350 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M427 366 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M475 384 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M523 400 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0" stroke-width="2"/>
+<circle class="f-bg" cx="288" cy="330" r="8"/>
+<path class="s-left" d="M288 322 A8 8 0 0 0 288 338" stroke-width="2"/>
+<path class="s-right" d="M288 322 A8 8 0 0 1 288 338" stroke-width="2"/>
+<circle class="f-mark" cx="288" cy="330" r="2"/>
+</svg>
