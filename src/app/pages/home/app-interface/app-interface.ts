@@ -18,21 +18,18 @@ export class AppInterface {
 
   draggingIndex: number | null = null;
 
-  // View-Logik: Berechnet die X-Koordinate anhand des Frequenz-Index
   getXPosition(index: number): number {
     const usableWidth = this.svgWidth - this.paddingX * 2;
     const step = usableWidth / (this.eqService.frequencies.length - 1);
     return this.paddingX + index * step;
   }
 
-  // View-Logik: Berechnet die Y-Koordinate anhand des Dezibel-Wertes
   getYPosition(dbValue: number): number {
     const usableHeight = this.svgHeight - this.paddingY * 2;
     const percentage = dbValue / 120;
     return this.paddingY + percentage * usableHeight;
   }
 
-  // Erzeugt den String für die gezeichneten Linien im SVG
   getPolylinePoints(dbArray: number[]): string {
     return dbArray
       .map((db, index) => {
@@ -43,7 +40,6 @@ export class AppInterface {
       .join(' ');
   }
 
-  // Aktualisiert die Werte, wenn der Nutzer unten in die Textfelder tippt
   onInputChange(index: number, event: Event) {
     const inputElement = event.target as HTMLInputElement;
     let value = parseInt(inputElement.value, 10);
@@ -55,13 +51,11 @@ export class AppInterface {
     this.eqService.updateValue(index, value);
   }
 
-  // Startet den Drag-Vorgang für einen bestimmten Punkt
   startDrag(event: MouseEvent, index: number) {
-    event.preventDefault(); // Verhindert, dass der Browser Text markiert
+    event.preventDefault();
     this.draggingIndex = index;
   }
 
-  // Berechnet die neue Position während die Maus gezogen wird
   @HostListener('window:mousemove', ['$event'])
   onDrag(event: MouseEvent) {
     if (this.draggingIndex === null) return;
@@ -82,7 +76,6 @@ export class AppInterface {
     this.eqService.updateValue(this.draggingIndex, dbValue);
   }
 
-  // Beendet den Drag-Vorgang, wenn die Maustaste losgelassen wird
   @HostListener('window:mouseup')
   stopDrag() {
     this.draggingIndex = null;
