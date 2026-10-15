@@ -41,11 +41,32 @@ const FOCAL_LENGTH = 500;
 /** Distance of the camera in front of the scene origin. */
 const CAMERA_Z = 600;
 
-/** Horizontal offset of the projection centre from the viewport centre, in px. */
+/** Horizontal offset of the hero-state projection centre from the viewport centre, in px. */
 const PROJECTION_OFFSET_X = -350;
 
-/** Vertical offset of the projection centre from the viewport centre, in px. */
+/** Vertical offset of the hero-state projection centre from the viewport centre, in px. */
 const PROJECTION_OFFSET_Y = 200;
+
+/** Horizontal anchor of the grid within the tool section (0 = left edge, 1 = right edge). */
+const GRID_ANCHOR_X = 0.25;
+
+/** Vertical anchor of the grid within the tool section (0 = top edge, 1 = bottom edge). */
+const GRID_ANCHOR_Y = 0.72;
+
+/** Viewport height fraction the tool's top edge reaches when the grid is complete. */
+const FORM_END_Y = 0.45;
+
+/** Viewport height fraction the tool's top edge is at when the grid starts to form (>1 = still below the fold). */
+const FORM_START_Y = 1.3;
+
+/** Viewport height fraction of the tool's bottom edge at which the grid starts to fade out. */
+const FADE_START_Y = 0.5;
+
+/** Share of the transition by which the highest frequency starts later than the lowest. */
+const BUILD_STAGGER = 0.5;
+
+/** Random extra delay per particle, relative to the transition, so columns do not move in lockstep. */
+const BUILD_JITTER = 0.08;
 
 /** Outer radius of the particle cloud around the black hole, in world units. */
 const CLOUD_RADIUS = 2000;
@@ -100,14 +121,22 @@ function smoothstep(t: number): number {
 }
 
 /**
- * Eases the scroll progress of the cloud-to-grid transition: barely moves at first, then fast.
+ * Eases a 0–1 value in and out along a cubic curve.
  *
- * @param t - Scroll progress from 0 to 1.
+ * @param t - Progress from 0 to 1.
  * @returns The eased progress from 0 to 1.
  */
-function easeTransition(t: number): number {
-  return t ** 4;
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
 }
+
+/**
+ * Limits a value to the range 0–1.
+ *
+ * @param t - Any value.
+ * @returns The value clamped to 0–1.
+ */
+const clamp01 = (t: number): number => Math.min(1, Math.max(0, t));
 
 /**
  * Represents an individual 3D particle operating within an interpolated coordinate system,
@@ -168,6 +197,9 @@ class Particle3D {
   /** Inertia resistance factor applied during linear interpolation step. */
   inertia: number;
 
+  /** Start delay within the transition: low frequencies start first, so the grid builds left to right. */
+  delay: number;
+
   /** Whether the next update snaps to the target instead of gliding (after a respawn). */
   private snap = true;
 
@@ -201,13 +233,14 @@ class Particle3D {
     this.currentZ = 0;
 
     this.inertia = 0.1 + Math.random() * 0.15;
+    this.delay = normX * BUILD_STAGGER + Math.random() * BUILD_JITTER;
   }
 
   /**
    * Computes mathematical wave oscillation, non-linear progression easing,
    * the black hole infall, ambient floating offsets, and frame-by-frame interpolation.
    *
-   * @param scrollFactor - Normalized page scroll progress ranging from 0.0 to 1.0.
+   * @param scrollFactor - Progress of the cloud-to-grid transition from 0 to 1.
    * @param time - Continuous elapsed time counter governing trigonometric wave movements.
    * @param dt - Infall time step in seconds (0 while motion is reduced).
    * @param push - Current outward displacement from a CTA pulse at the cloud edge, in world units.
@@ -240,7 +273,9 @@ class Particle3D {
     const wave3 = Math.sin((this.gridX - this.gridZ) * 0.015 + time * 1.4) * 8;
     const waveY = wave1 + wave2 + wave3 + curveY;
 
-    const ease = easeTransition(scrollFactor);
+    const ease = easeInOutCubic(
+      clamp01((scrollFactor - this.delay) / (1 - BUILD_STAGGER - BUILD_JITTER)),
+    );
     if (ease < 1) this.fall(dt);
 
     const flatten = Math.sqrt(this.radius / CLOUD_RADIUS);
@@ -333,8 +368,14 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   /** Identifier token used to terminate the recursive animation frame loop. */
   private animationFrameId: number = 0;
 
-  /** Normalized interpolation factor derived from scroll progression. */
+  /** Progress of the cloud-to-grid transition from 0 to 1, driven by the tool's scroll position. */
   private scrollFactor: number = 0;
+
+  /** Tool section the grid is placed next to. */
+  private tool: Element | null = null;
+
+  /** Projection centre of the finished grid in px, anchored to the tool. */
+  private gridCenter = { x: 0, y: 0 };
 
   /** Global opacity scalar applied across the complete particle collective. */
   private fadeOpacity: number = 1;
@@ -371,6 +412,8 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d')!;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    // shortcut: couples to the sibling's selector in home.html; update it if the home layout changes
+    this.tool = document.querySelector('app-app-interface');
     this.resizeCanvas();
     this.initParticles();
     this.startLoop();
@@ -391,27 +434,25 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    this.onScroll();
   }
 
   /**
-   * Tracks window displacement metrics to compute non-linear grid progression
-   * and terminal fade-out decay thresholds.
+   * Derives transition progress, fade-out and grid position from where the tool currently is:
+   * the grid forms while the tool scrolls in, sits next to it and fades out as it leaves.
    */
   @HostListener('window:scroll')
   onScroll(): void {
-    const scrollY = window.scrollY;
+    if (!this.tool) return;
+    const rect = this.tool.getBoundingClientRect();
+    const vh = window.innerHeight;
 
-    const scrollDistanceForTransition = 900;
-    this.scrollFactor = Math.min(scrollY / scrollDistanceForTransition, 1);
-
-    const fadeStart = 1350;
-    const fadeEnd = 1500;
-
-    if (scrollY <= fadeStart) {
-      this.fadeOpacity = 1;
-    } else {
-      this.fadeOpacity = Math.max(0, 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart));
-    }
+    this.scrollFactor = clamp01((vh * FORM_START_Y - rect.top) / (vh * (FORM_START_Y - FORM_END_Y)));
+    this.fadeOpacity = clamp01(rect.bottom / (vh * FADE_START_Y));
+    this.gridCenter = {
+      x: rect.left + rect.width * GRID_ANCHOR_X,
+      y: rect.top + rect.height * GRID_ANCHOR_Y,
+    };
   }
 
   /**
@@ -499,6 +540,7 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
   /**
    * Projects 3D spatial points onto the 2D surface using perspective division
    * and executes draw operations based on distance and visual density thresholds.
+   * The projection centre moves from the hero position to the tool anchor during the transition.
    *
    * Particles are grouped into {@link ALPHA_STEPS} brightness steps with one path and one fill
    * per step. No depth sorting is needed: all particles share one colour and only differ in
@@ -510,12 +552,14 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
 
     if (this.fadeOpacity === 0) return;
 
-    const centerX = canvas.width / 2 + PROJECTION_OFFSET_X;
-    const centerY = canvas.height / 2 + PROJECTION_OFFSET_Y;
+    const progress = easeInOutCubic(this.scrollFactor);
+    const heroCenterX = canvas.width / 2 + PROJECTION_OFFSET_X;
+    const heroCenterY = canvas.height / 2 + PROJECTION_OFFSET_Y;
+    const centerX = heroCenterX + (this.gridCenter.x - heroCenterX) * progress;
+    const centerY = heroCenterY + (this.gridCenter.y - heroCenterY) * progress;
 
     this.ctx.fillStyle = 'rgba(236, 236, 236, 0.9)';
 
-    const progress = easeTransition(this.scrollFactor);
     const densityAlpha =
       progress < 0.5 ? 0.3 - 0.2 * (progress * 2) : 0.1 + 0.8 * ((progress - 0.5) * 2);
 
