@@ -33,6 +33,59 @@ const CIRCLE_MIN_RADIUS = 1.5;
 /** Number of brightness steps particles are grouped into, so each step needs only one fill call. */
 const ALPHA_STEPS = 32;
 
+/** Perspective focal length of the camera. */
+const FOCAL_LENGTH = 500;
+
+/** Distance of the camera in front of the scene origin. */
+const CAMERA_Z = 600;
+
+/** Horizontal offset of the projection centre from the viewport centre, in px. */
+const PROJECTION_OFFSET_X = -350;
+
+/** Vertical offset of the projection centre from the viewport centre, in px. */
+const PROJECTION_OFFSET_Y = 200;
+
+/** Outer radius of the particle cloud around the black hole, in world units. */
+const CLOUD_RADIUS = 2000;
+
+/** Radius in world units at which a particle falls into the black hole and respawns at the edge. */
+const HOLE_RADIUS = 90;
+
+/** Width in world units of the band in which particles fade in after respawn and out before falling in. */
+const HOLE_FADE = 160;
+
+/** Infall speed at the outer edge in world units per second; it grows towards the centre like gravity. */
+const INFALL_SPEED = 5;
+
+/** Fastest infall speed in world units per second, reached close to the centre. */
+const INFALL_SPEED_MAX = 15;
+
+/**
+ * Vertical position of the hero centre relative to the viewport height at scroll 0.
+ * shortcut: mirrors `.hero { min-height: 85dvh }` with centred content; update if the hero layout changes.
+ */
+const HERO_CENTER_Y = 0.425;
+
+/** Longest frame step in seconds, so the cloud does not jump after a paused tab. */
+const MAX_FRAME_STEP = 0.1;
+
+/** World position of the black hole the cloud falls into. */
+interface Attractor {
+  /** Horizontal world coordinate. */
+  x: number;
+  /** Vertical world coordinate. */
+  y: number;
+}
+
+/**
+ * Returns a random number within a range.
+ *
+ * @param min - Lower bound (inclusive).
+ * @param max - Upper bound (exclusive).
+ * @returns A random number between `min` and `max`.
+ */
+const randomBetween = (min: number, max: number): number => min + Math.random() * (max - min);
+
 /** Eases a 0–1 value along an S-curve (smooth start and end). */
 function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
@@ -50,7 +103,7 @@ function easeTransition(t: number): number {
 
 /**
  * Represents an individual 3D particle operating within an interpolated coordinate system,
- * transitioning smoothly from a randomized chaos cloud to an undulating grid structure.
+ * transitioning smoothly from a cloud falling into a black hole to an undulating grid structure.
  */
 class Particle3D {
   /** Target horizontal position within the ordered grid. */
@@ -71,14 +124,20 @@ class Particle3D {
   /** Influence of the left ear curve at this depth (0–1). */
   leftEarWeight: number;
 
-  /** Stochastic origin offset along the horizontal axis. */
-  chaosX: number;
+  /** Direction from the black hole in the horizontal plane, in radians. */
+  angle = 0;
 
-  /** Stochastic origin offset along the vertical axis. */
-  chaosY: number;
+  /** Distance to the black hole in the horizontal plane, in world units. */
+  radius = 0;
 
-  /** Stochastic origin offset along the depth axis. */
-  chaosZ: number;
+  /** Vertical offset from the disk plane at the outer edge; the cloud flattens towards the centre. */
+  height = 0;
+
+  /** Phase seed of the ambient float movement. */
+  seed = 0;
+
+  /** Visibility from 0 to 1, fading particles in after respawn and out before they fall in. */
+  life = 1;
 
   /** Current intermediate horizontal world coordinate after inertia calculation. */
   currentX: number;
@@ -101,14 +160,18 @@ class Particle3D {
   /** Inertia resistance factor applied during linear interpolation step. */
   inertia: number;
 
+  /** Whether the next update snaps to the target instead of gliding (after a respawn). */
+  private snap = true;
+
   /**
-   * Instantiates a single 3D particle with bounded random initial positioning.
+   * Instantiates a single 3D particle at a random point of the cloud.
    *
    * @param gridX - Grid-relative horizontal target coordinate.
    * @param gridZ - Grid-relative depth target coordinate.
-   * @param chaosSpread - Maximum radial scattering distance for initial positioning.
+   * @param normX - Normalized horizontal grid position (0–1).
+   * @param normZ - Normalized depth grid position (0–1).
    */
-  constructor(gridX: number, gridZ: number, chaosSpread: number, normX: number, normZ: number) {
+  constructor(gridX: number, gridZ: number, normX: number, normZ: number) {
     this.gridX = gridX;
     this.gridZ = gridZ;
 
@@ -123,25 +186,34 @@ class Particle3D {
       Math.max(0, 1 - Math.abs(normZ - LEFT_EAR_DEPTH) / EAR_RIDGE_WIDTH),
     );
 
-    this.chaosX = (Math.random() - 0.5) * chaosSpread;
-    this.chaosY = (Math.random() - 0.5) * chaosSpread;
-    this.chaosZ = (Math.random() - 0.5) * chaosSpread;
-
-    this.currentX = this.chaosX;
-    this.currentY = this.chaosY;
-    this.currentZ = this.chaosZ;
+    this.respawn();
+    this.radius = randomBetween(HOLE_RADIUS, CLOUD_RADIUS);
+    this.currentX = 0;
+    this.currentY = 0;
+    this.currentZ = 0;
 
     this.inertia = 0.1 + Math.random() * 0.15;
   }
 
   /**
    * Computes mathematical wave oscillation, non-linear progression easing,
-   * ambient floating offsets, and frame-by-frame interpolation.
+   * the black hole infall, ambient floating offsets, and frame-by-frame interpolation.
    *
    * @param scrollFactor - Normalized page scroll progress ranging from 0.0 to 1.0.
    * @param time - Continuous elapsed time counter governing trigonometric wave movements.
+   * @param dt - Infall time step in seconds (0 while motion is reduced).
+   * @param hole - World position of the black hole.
+   * @param rightDb - Right ear audiogram values in dB HL.
+   * @param leftDb - Left ear audiogram values in dB HL.
    */
-  update(scrollFactor: number, time: number, rightDb: number[], leftDb: number[]): void {
+  update(
+    scrollFactor: number,
+    time: number,
+    dt: number,
+    hole: Attractor,
+    rightDb: number[],
+    leftDb: number[],
+  ): void {
     const rightLeftPost = rightDb[this.freqIndex];
     const rightRightPost = rightDb[this.freqIndex + 1];
     const rightHere = rightLeftPost + (rightRightPost - rightLeftPost) * this.freqFrac;
@@ -159,26 +231,62 @@ class Particle3D {
     const waveY = wave1 + wave2 + wave3 + curveY;
 
     const ease = easeTransition(scrollFactor);
+    if (ease < 1) this.fall(dt);
 
-    const floatX = Math.sin(this.chaosY * 0.01 + time * 0.4) * 60;
-    const floatY = Math.cos(this.chaosX * 0.015 + time * 0.45) * 40;
-    const floatZ = Math.sin(this.chaosZ * 0.01 + time * 0.25) * 60;
+    const flatten = Math.sqrt(this.radius / CLOUD_RADIUS);
+    const cloudX = hole.x + Math.cos(this.angle) * this.radius;
+    const cloudY = hole.y + this.height * flatten;
+    const cloudZ = Math.sin(this.angle) * this.radius;
 
-    const startX = this.chaosX + floatX * (1 - ease);
-    const startY = this.chaosY + floatY * (1 - ease);
-    const startZ = this.chaosZ + floatZ * (1 - ease);
+    const floatX = Math.sin(this.seed + time * 0.4) * 60 * flatten;
+    const floatY = Math.cos(this.seed * 1.5 + time * 0.45) * 40 * flatten;
+    const floatZ = Math.sin(this.seed * 0.7 + time * 0.25) * 60 * flatten;
+
+    const startX = cloudX + floatX * (1 - ease);
+    const startY = cloudY + floatY * (1 - ease);
+    const startZ = cloudZ + floatZ * (1 - ease);
+
+    const cloudLife =
+      smoothstep(Math.min(1, Math.max(0, (this.radius - HOLE_RADIUS) / HOLE_FADE))) *
+      smoothstep(Math.min(1, Math.max(0, (CLOUD_RADIUS - this.radius) / HOLE_FADE)));
+    this.life = cloudLife + (1 - cloudLife) * ease;
 
     const targetX = startX + (this.gridX - startX) * ease;
     const targetY = startY + (waveY - startY) * ease;
     const targetZ = startZ + (this.gridZ - startZ) * ease;
 
-    this.currentX += (targetX - this.currentX) * this.inertia;
-    this.currentY += (targetY - this.currentY) * this.inertia;
-    this.currentZ += (targetZ - this.currentZ) * this.inertia;
+    const glide = this.snap ? 1 : this.inertia;
+    this.snap = false;
+    this.currentX += (targetX - this.currentX) * glide;
+    this.currentY += (targetY - this.currentY) * glide;
+    this.currentZ += (targetZ - this.currentZ) * glide;
 
     this.x = this.currentX;
     this.y = this.currentY;
     this.z = this.currentZ;
+  }
+
+  /**
+   * Pulls the particle straight towards the black hole, faster the closer it gets.
+   * Once it falls in, it respawns at the edge of the cloud.
+   *
+   * @param dt - Time step in seconds.
+   */
+  private fall(dt: number): void {
+    const closeness = CLOUD_RADIUS / this.radius;
+    this.radius -= Math.min(INFALL_SPEED * closeness, INFALL_SPEED_MAX) * dt;
+    if (this.radius < HOLE_RADIUS) {
+      this.respawn();
+      this.snap = true;
+    }
+  }
+
+  /** Places the particle at the edge of the cloud with a new random direction, height and phase. */
+  private respawn(): void {
+    this.radius = CLOUD_RADIUS;
+    this.angle = randomBetween(0, Math.PI * 2);
+    this.height = randomBetween(-CLOUD_RADIUS, CLOUD_RADIUS) / 2;
+    this.seed = randomBetween(0, Math.PI * 2);
   }
 }
 
@@ -217,6 +325,9 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
 
   /** Whether the canvas has been cleared after fading out, so idle frames can skip all work. */
   private cleared = false;
+
+  /** Timestamp of the previous animation frame in ms, or 0 before the first frame. */
+  private lastTime = 0;
 
   /** Collection of allocated active 3D particle entities. */
   private particles: Particle3D[] = [];
@@ -287,7 +398,6 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    */
   private initParticles(): void {
     this.particles = [];
-    const chaosSpread = 2500;
     const isMobile = window.innerWidth < 768;
 
     const currentCols = isMobile ? Math.floor(this.cols / 2) : this.cols;
@@ -300,7 +410,7 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
         const gridX = (x - currentCols / 2) * currentSpacing;
         const normX = x / (currentCols - 1);
         const gridZ = z * currentSpacing;
-        this.particles.push(new Particle3D(gridX, gridZ, chaosSpread, normX, normZ));
+        this.particles.push(new Particle3D(gridX, gridZ, normX, normZ));
       }
     }
   }
@@ -309,10 +419,13 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    * Recursive animation routine driving coordinate mutation and rendering.
    * While fully faded out, the canvas is cleared once and all further work is skipped.
    */
-  private startLoop = (): void => {
+  private startLoop = (now = 0): void => {
+    const dt = this.lastTime ? Math.min((now - this.lastTime) / 1000, MAX_FRAME_STEP) : 0;
+    this.lastTime = now;
+
     if (this.fadeOpacity > 0) {
       if (!this.reducedMotion) this.time += 0.004;
-      this.update();
+      this.update(this.reducedMotion ? 0 : dt);
       this.draw();
       this.cleared = false;
     } else if (!this.cleared) {
@@ -324,11 +437,37 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
 
   /**
    * Steps the state of each particle forward.
+   *
+   * @param dt - Infall time step in seconds.
    */
-  private update(): void {
-    this.particles.forEach((p) =>
-      p.update(this.scrollFactor, this.time, this.eqService.rightEarDb, this.eqService.leftEarDb),
-    );
+  private update(dt: number): void {
+    const hole = this.blackHole();
+    for (const p of this.particles) {
+      p.update(
+        this.scrollFactor,
+        this.time,
+        dt,
+        hole,
+        this.eqService.rightEarDb,
+        this.eqService.leftEarDb,
+      );
+    }
+  }
+
+  /**
+   * Places the black hole in world space so that it projects onto the hero centre,
+   * which also makes it follow the hero while scrolling.
+   *
+   * @returns World position of the black hole in the plane z = 0.
+   */
+  private blackHole(): Attractor {
+    const canvas = this.canvasRef.nativeElement;
+    const scale = FOCAL_LENGTH / CAMERA_Z;
+    const heroY = canvas.height * HERO_CENTER_Y - window.scrollY;
+    return {
+      x: -PROJECTION_OFFSET_X / scale,
+      y: (heroY - canvas.height / 2 - PROJECTION_OFFSET_Y) / scale,
+    };
   }
 
   /**
@@ -345,10 +484,8 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
 
     if (this.fadeOpacity === 0) return;
 
-    const centerX = canvas.width / 2 - 350;
-    const centerY = canvas.height / 2 + 200;
-    const focalLength = 500;
-    const cameraZ = 600;
+    const centerX = canvas.width / 2 + PROJECTION_OFFSET_X;
+    const centerY = canvas.height / 2 + PROJECTION_OFFSET_Y;
 
     this.ctx.fillStyle = 'rgba(236, 236, 236, 0.9)';
 
@@ -360,11 +497,11 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     const used = new Array<boolean>(ALPHA_STEPS).fill(false);
 
     for (const p of this.particles) {
-      const zPos = p.z + cameraZ;
+      const zPos = p.z + CAMERA_Z;
       if (zPos <= 0) continue;
 
-      const scale = focalLength / zPos;
-      const alpha = Math.min(1, scale * densityAlpha);
+      const scale = FOCAL_LENGTH / zPos;
+      const alpha = Math.min(1, scale * densityAlpha * p.life);
       if (alpha <= 0) continue;
 
       const screenX = centerX + p.x * scale;

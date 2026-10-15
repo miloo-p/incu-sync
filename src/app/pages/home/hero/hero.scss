@@ -17,13 +17,13 @@
       z-index: -1;
       background: radial-gradient(
         closest-side,
-        color-mix(in srgb, #000 95%, transparent) 0%,
-        color-mix(in srgb, #000 94%, transparent) 35%,
-        color-mix(in srgb, #000 88%, transparent) 50%,
-        color-mix(in srgb, #000 76%, transparent) 62%,
-        color-mix(in srgb, #000 58%, transparent) 73%,
-        color-mix(in srgb, #000 36%, transparent) 84%,
-        color-mix(in srgb, #000 14%, transparent) 93%,
+        color-mix(in srgb, #000 95%, transparent) 10%,
+        color-mix(in srgb, #000 94%, transparent) 25%,
+        color-mix(in srgb, #000 88%, transparent) 35%,
+        color-mix(in srgb, #000 76%, transparent) 50%,
+        color-mix(in srgb, #000 58%, transparent) 60%,
+        color-mix(in srgb, #000 36%, transparent) 80%,
+        color-mix(in srgb, #000 14%, transparent) 90%,
         transparent 100%
       );
       filter: blur(2rem);
