@@ -6,8 +6,10 @@ import {
   OnDestroy,
   HostListener,
   inject,
+  effect,
 } from '@angular/core';
 import { EqCalc } from '../../../core/services/eq-calc';
+import { CtaPulse } from '../../../core/services/cta-pulse';
 
 /** Number of gaps between the 7 audiogram frequency bands. */
 const FREQ_SEGMENTS = 6;
@@ -59,6 +61,12 @@ const INFALL_SPEED = 5;
 
 /** Fastest infall speed in world units per second, reached close to the centre. */
 const INFALL_SPEED_MAX = 15;
+
+/** Largest outward displacement of a particle at the cloud edge after a CTA pulse, in world units. */
+const PULSE_PUSH_DISTANCE = 15;
+
+/** Time in seconds until the CTA pulse push peaks; afterwards the particles spring back. */
+const PULSE_PUSH_RISE = 0.15;
 
 /**
  * Vertical position of the hero centre relative to the viewport height at scroll 0.
@@ -202,6 +210,7 @@ class Particle3D {
    * @param scrollFactor - Normalized page scroll progress ranging from 0.0 to 1.0.
    * @param time - Continuous elapsed time counter governing trigonometric wave movements.
    * @param dt - Infall time step in seconds (0 while motion is reduced).
+   * @param push - Current outward displacement from a CTA pulse at the cloud edge, in world units.
    * @param hole - World position of the black hole.
    * @param rightDb - Right ear audiogram values in dB HL.
    * @param leftDb - Left ear audiogram values in dB HL.
@@ -210,6 +219,7 @@ class Particle3D {
     scrollFactor: number,
     time: number,
     dt: number,
+    push: number,
     hole: Attractor,
     rightDb: number[],
     leftDb: number[],
@@ -234,9 +244,10 @@ class Particle3D {
     if (ease < 1) this.fall(dt);
 
     const flatten = Math.sqrt(this.radius / CLOUD_RADIUS);
-    const cloudX = hole.x + Math.cos(this.angle) * this.radius;
+    const pushedRadius = this.radius + push * Math.sqrt(CLOUD_RADIUS / this.radius) * (1 - ease);
+    const cloudX = hole.x + Math.cos(this.angle) * pushedRadius;
     const cloudY = hole.y + this.height * flatten;
-    const cloudZ = Math.sin(this.angle) * this.radius;
+    const cloudZ = Math.sin(this.angle) * pushedRadius;
 
     const floatX = Math.sin(this.seed + time * 0.4) * 60 * flatten;
     const floatY = Math.cos(this.seed * 1.5 + time * 0.45) * 40 * flatten;
@@ -302,6 +313,17 @@ class Particle3D {
 })
 export class ParticleCanvas implements AfterViewInit, OnDestroy {
   private eqService = inject(EqCalc);
+
+  /** Seconds since the last CTA pulse; drives the elastic outward push of the cloud. */
+  private pushAge = Infinity;
+
+  /** Pushes the cloud outward whenever the hero CTA sends a pulse. */
+  constructor() {
+    const ctaPulse = inject(CtaPulse);
+    effect(() => {
+      if (ctaPulse.count()) this.pushAge = 0;
+    });
+  }
   /** DOM element reference pointing to the native HTML5 rendering canvas. */
   @ViewChild('particleCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -442,11 +464,15 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
    */
   private update(dt: number): void {
     const hole = this.blackHole();
+    this.pushAge += dt;
+    const pushPhase = this.pushAge / PULSE_PUSH_RISE;
+    const push = pushPhase < 50 ? PULSE_PUSH_DISTANCE * pushPhase * Math.exp(1 - pushPhase) : 0;
     for (const p of this.particles) {
       p.update(
         this.scrollFactor,
         this.time,
         dt,
+        push,
         hole,
         this.eqService.rightEarDb,
         this.eqService.leftEarDb,

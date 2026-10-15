@@ -6,8 +6,10 @@ import {
   OnDestroy,
   ViewChild,
   effect,
+  inject,
   input,
 } from '@angular/core';
+import { CtaPulse } from '../../../../core/services/cta-pulse';
 
 /** Minimum number of rings per impulse. */
 const BURST_SIZE_MIN = 2;
@@ -251,6 +253,9 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
   /** Whether the hero CTA is hovered or focused. */
   readonly ctaActive = input(false);
 
+  /** Shares the pulse with other animations. */
+  private readonly ctaPulse = inject(CtaPulse);
+
   /** Canvas the sound-wave rings are drawn on. */
   @ViewChild('waveCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -420,6 +425,7 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
   private startPulse(): void {
     if (this.reducedMotion) return;
     for (let i = 0; i < PULSE_RINGS; i++) this.pulses.push(-i * PULSE_STAGGER);
+    this.ctaPulse.trigger();
   }
 
   /**
