@@ -36,14 +36,38 @@ const EMISSION_STRENGTH_JITTER = 0.15;
 /** Strength factor applied per following ring inside an impulse, so an impulse fades like an echo. */
 const ECHO_DECAY = 0.65;
 
-/** Outward travel speed of the rings in px per second. */
-const RING_SPEED = 10;
+/** Outward travel speed of a ring right at the text in px per second. */
+const RING_SPEED_START = 22;
+
+/** Outward travel speed of a ring at the canvas edge in px per second; rings lose energy on the way. */
+const RING_SPEED_END = 5;
+
+/** Random deviation of each ring's start and end speed, relative to the nominal speeds. */
+const RING_SPEED_VARIANCE = 0.3;
+
+/** Line width of a ring right at the text in px. */
+const RING_WIDTH_START = 1.3;
+
+/** Line width of a ring at the canvas edge in px. */
+const RING_WIDTH_END = 0.6;
+
+/** Part of its brightness a ring has lost by the time it reaches the canvas edge. */
+const ENERGY_FADE = 0.5;
+
+/** Fastest drift of a ring's brightness course around the ring, in radians per second (either direction). */
+const DRIFT_SPEED_MAX = 0.25;
+
+/** Amplitude of the irregular back-and-forth on top of the drift, in radians. */
+const DRIFT_WOBBLE = 0.6;
+
+/** Speed of the irregular back-and-forth, in radians per second. */
+const DRIFT_WOBBLE_SPEED = 0.7;
 
 /** Number of sample points per ring, enough to bend smoothly around the cursor. */
 const RING_SEGMENTS = 240;
 
 /** Base opacity of the ring strokes; each ring varies around it via its strength. */
-const RING_ALPHA = 0.14;
+const RING_ALPHA = 0.25;
 
 /** Number of random brightness points along a ring's circumference. */
 const FADE_STOPS = 5;
@@ -150,12 +174,18 @@ interface Ring {
   r: number;
   /** Opacity factor so rings differ in presence. */
   strength: number;
-  /** Random brightness course along the ring. */
-  fade: CanvasGradient;
-  /** Start angle of {@link Ring.fade} in radians, kept to rebuild the gradient on resize. */
+  /** Start angle of the random brightness course along the ring, in radians. */
   fadeAngle: number;
-  /** Color stops of {@link Ring.fade}, kept to rebuild the gradient on resize. */
+  /** Color stops of the brightness course. */
   fadeStops: [offset: number, color: string][];
+  /** Drift speed of the brightness course around the ring, in radians per second. */
+  driftSpeed: number;
+  /** Phase of the irregular back-and-forth of the brightness course. */
+  driftPhase: number;
+  /** This ring's outward speed right at the text, in px per second. */
+  speedStart: number;
+  /** This ring's outward speed at the canvas edge, in px per second. */
+  speedEnd: number;
   /** Current wobble amplitude in px from a passing CTA pulse; decays over time. */
   kick: number;
 }
@@ -239,10 +269,10 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
   /** Timestamp of the previous animation frame in ms, or 0 after a (re)start. */
   private lastTime = 0;
 
-  /** Rings ordered from inside to outside. */
+  /** Rings ordered from newest to oldest; with individual speeds, older rings may be overtaken. */
   private rings: Ring[] = [];
 
-  /** Distance the innermost ring must travel before the next ring is emitted. */
+  /** Distance the newest ring must travel before the next ring is emitted. */
   private nextGap = 0;
 
   /** Position of the next ring inside the current impulse. */
@@ -341,10 +371,7 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
 
     if (this.rings.length && this.lastWidth) {
       const scale = width / this.lastWidth;
-      for (const ring of this.rings) {
-        ring.r *= scale;
-        ring.fade = this.buildFade(ring.fadeAngle, ring.fadeStops);
-      }
+      for (const ring of this.rings) ring.r *= scale;
     } else {
       this.fillRings();
     }
@@ -422,23 +449,51 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
     return gradient;
   }
 
-  /** Pre-fills the canvas with rings in the same rhythm as the running state, so it does not start empty. */
+  /**
+   * Pre-fills the canvas with rings in the same rhythm and spacing as the running state, so it
+   * does not start empty. Gaps shrink outward where rings travel slower.
+   */
   private fillRings(): void {
     const maxR = this.canvasRef.nativeElement.clientWidth / 2 + PAUSE_GAP_MAX;
     const emissions: Emission[] = [];
-    for (let total = 0; total < maxR; ) {
+    let r = 0;
+    while (r < maxR) {
       const emission = this.nextEmission();
       emissions.push(emission);
-      total += emission.gap;
+      r += (emission.gap * this.speedAt(r)) / RING_SPEED_START;
     }
 
     this.rings = [];
-    let r = 0;
+    r = 0;
     for (const { gap, strength } of emissions.reverse()) {
-      r += gap;
+      r += (gap * this.speedAt(r)) / RING_SPEED_START;
       this.rings.push(this.createRing(r, strength));
     }
     this.nextGap = emissions[0].gap;
+  }
+
+  /**
+   * How far a ring has lost its energy at a radius: 0 at the text, 1 at the canvas edge,
+   * eased out so most of the slowdown happens early.
+   *
+   * @param r - Horizontal radius in px.
+   * @returns The energy loss from 0 to 1.
+   */
+  private energyLoss(r: number): number {
+    const progress = Math.min(r / (this.canvasRef.nativeElement.clientWidth / 2), 1);
+    return 1 - (1 - progress) ** 2;
+  }
+
+  /**
+   * Outward speed of a ring at a radius.
+   *
+   * @param r - Horizontal radius in px.
+   * @param start - Speed right at the text in px per second; defaults to the nominal speed.
+   * @param end - Speed at the canvas edge in px per second; defaults to the nominal speed.
+   * @returns The speed in px per second.
+   */
+  private speedAt(r: number, start = RING_SPEED_START, end = RING_SPEED_END): number {
+    return start + (end - start) * this.energyLoss(r);
   }
 
   /**
@@ -479,13 +534,16 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
     }
     fadeStops.push([1, edge]);
 
-    const fadeAngle = randomBetween(0, Math.PI * 2);
     return {
       r,
       strength,
-      fade: this.buildFade(fadeAngle, fadeStops),
-      fadeAngle,
+      fadeAngle: randomBetween(0, Math.PI * 2),
       fadeStops,
+      driftSpeed: randomBetween(-DRIFT_SPEED_MAX, DRIFT_SPEED_MAX),
+      driftPhase: randomBetween(0, Math.PI * 2),
+      speedStart:
+        RING_SPEED_START * randomBetween(1 - RING_SPEED_VARIANCE, 1 + RING_SPEED_VARIANCE),
+      speedEnd: RING_SPEED_END * randomBetween(1 - RING_SPEED_VARIANCE, 1 + RING_SPEED_VARIANCE),
       kick: 0,
     };
   }
@@ -515,16 +573,17 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
    */
   private updateRings(dt: number): void {
     const maxR = this.canvasRef.nativeElement.clientWidth / 2 + PAUSE_GAP_MAX;
-    for (const ring of this.rings) ring.r += RING_SPEED * dt;
+    for (const ring of this.rings)
+      ring.r += this.speedAt(ring.r, ring.speedStart, ring.speedEnd) * dt;
 
-    const innermost = this.rings[0]?.r ?? Infinity;
-    if (innermost >= this.nextGap) {
+    const newest = this.rings[0]?.r ?? Infinity;
+    if (newest >= this.nextGap) {
       const { gap, strength } = this.nextEmission();
       this.rings.unshift(this.createRing(0, strength));
       this.nextGap = gap;
     }
 
-    while (this.rings.length && this.rings[this.rings.length - 1].r > maxR) this.rings.pop();
+    this.rings = this.rings.filter((ring) => ring.r <= maxR);
   }
 
   /**
@@ -608,11 +667,20 @@ export class HeroWaves implements AfterViewInit, OnDestroy {
 
     const glowStyle = this.createGlowStyle();
 
-    for (const { r, strength, fade, kick } of this.rings) {
-      const path = this.ringPath(r, kick, cx, cy, aspect, time);
+    const driftTime = this.reducedMotion ? 0 : time;
 
-      ctx.globalAlpha = RING_ALPHA * strength;
-      ctx.strokeStyle = fade;
+    for (const ring of this.rings) {
+      const { r, strength, kick } = ring;
+      const path = this.ringPath(r, kick, cx, cy, aspect, time);
+      const loss = this.energyLoss(r);
+      const fadeAngle =
+        ring.fadeAngle +
+        ring.driftSpeed * driftTime +
+        DRIFT_WOBBLE * Math.sin(driftTime * DRIFT_WOBBLE_SPEED + ring.driftPhase);
+
+      ctx.lineWidth = RING_WIDTH_START + (RING_WIDTH_END - RING_WIDTH_START) * loss;
+      ctx.globalAlpha = RING_ALPHA * strength * (1 - ENERGY_FADE * loss);
+      ctx.strokeStyle = this.buildFade(fadeAngle, ring.fadeStops);
       ctx.stroke(path);
 
       if (this.ctaStyle && this.ctaHighlight > EFFECT_EPSILON) {
