@@ -13,7 +13,6 @@ export class ExportBtn {
   btnClick = output<void>();
 
   onButtonClick(): void {
-    console.log('test: onButtonClick');
     this.btnClick.emit();
   }
 }

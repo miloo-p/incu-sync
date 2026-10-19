@@ -1,5 +1,6 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { EqCalc } from '../../../core/services/eq-calc';
+import { Export } from '../../../core/services/export';
 import { ExportBtn } from '../../../shared/components/export-btn/export-btn';
 
 @Component({
@@ -11,6 +12,7 @@ import { ExportBtn } from '../../../shared/components/export-btn/export-btn';
 })
 export class AppInterface {
   eqService = inject(EqCalc);
+  exportService = inject(Export);
 
   private readonly svgWidth = 700;
   private readonly svgHeight = 400;
@@ -82,7 +84,9 @@ export class AppInterface {
     this.draggingIndex = null;
   }
 
-  test() {
-    console.log('test');
+  configDownload() {
+    const configText = 'Preamp: -6 dB\nFilter: ON PK Fc 1000 Hz Gain 6 dB Q 1.41';
+    const filename = 'config.txt';
+    this.exportService.download(configText, filename);
   }
 }
