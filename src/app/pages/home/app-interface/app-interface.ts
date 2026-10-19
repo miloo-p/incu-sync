@@ -1,10 +1,11 @@
 import { Component, HostListener, inject } from '@angular/core';
 import { EqCalc } from '../../../core/services/eq-calc';
+import { ExportBtn } from '../../../shared/components/export-btn/export-btn';
 
 @Component({
   selector: 'app-app-interface',
   standalone: true,
-  imports: [],
+  imports: [ExportBtn],
   templateUrl: './app-interface.html',
   styleUrl: './app-interface.scss',
 })
@@ -79,5 +80,9 @@ export class AppInterface {
   @HostListener('window:mouseup')
   stopDrag() {
     this.draggingIndex = null;
+  }
+
+  test() {
+    console.log('test');
   }
 }

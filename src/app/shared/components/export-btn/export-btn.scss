@@ -1,0 +1,49 @@
+@use '../../../../styles/abstracts/mixins' as *;
+
+.btn-export {
+  @include flexbox(row, center, center);
+  min-width: 12.25rem;
+  max-width: 100%;
+  padding: var(--space-2xs);
+
+  border: 0;
+  border-radius: var(--radius-lg);
+  background-image: linear-gradient(
+    144deg,
+    var(--clr-ear-left),
+    var(--primary-700) 50%,
+    var(--clr-ear-right)
+  );
+  box-shadow: 0 15px 30px -5px var(--clr-ear-left-glow);
+
+  color: var(--text-primary);
+  font-family: var(--ff-sans);
+  font-size: var(--fs-h2);
+  font-weight: var(--fw-semibold);
+  line-height: 1em;
+  white-space: nowrap;
+  text-decoration: none;
+
+  user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+
+  span {
+    width: 100%;
+    height: 100%;
+    padding: var(--space-lg) var(--space-xl);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-chassis);
+    transition: background-color 300ms;
+  }
+
+  &:hover span,
+  &:focus-visible span {
+    background-color: color-mix(in srgb, var(--surface-chassis) 85%, transparent);
+  }
+
+  @include respond-to(md) {
+    min-width: 8.75rem;
+    font-size: var(--fs-body);
+  }
+}

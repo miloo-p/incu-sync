@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, output } from '@angular/core';
 
 @Component({
   selector: 'app-export-btn',
@@ -6,4 +6,14 @@ import { Component } from '@angular/core';
   templateUrl: './export-btn.html',
   styleUrl: './export-btn.scss',
 })
-export class ExportBtn {}
+export class ExportBtn {
+  btnClick = output<void>();
+
+  /**
+   * Fires when the user clicks the button.
+   */
+  onButtonClick(): void {
+    console.log('test: onButtonClick');
+    this.btnClick.emit();
+  }
+}
