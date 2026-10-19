@@ -7,11 +7,11 @@ import { Component, output } from '@angular/core';
   styleUrl: './export-btn.scss',
 })
 export class ExportBtn {
-  btnClick = output<void>();
-
   /**
    * Fires when the user clicks the button.
    */
+  btnClick = output<void>();
+
   onButtonClick(): void {
     console.log('test: onButtonClick');
     this.btnClick.emit();
