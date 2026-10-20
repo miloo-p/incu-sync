@@ -16,17 +16,18 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 ### 1.1 Project Setup & Design System
 
-- [ ] Angular Scaffolding (SSR deaktiviert für native Browser-API-Kompatibilität).
-- [ ] Konfiguration von SCSS & Design-Tokens (Dark-Mode, Studio-Hardware-Ästhetik: Deep Charcoal, anodisiertes Aluminium, LED-Akzente in Amber/Cyan).
-- [ ] Modularer Aufbau der Ordnerstruktur:
+- [x] Angular Scaffolding (SSR deaktiviert für native Browser-API-Kompatibilität).
+- [x] Konfiguration von SCSS & Design-Tokens (Dark-Mode, Studio-Hardware-Ästhetik: Deep Charcoal, anodisiertes Aluminium, LED-Akzente in Amber/Cyan).
+- [x] Modularer Aufbau der Ordnerstruktur:
   - `core/` (Services, Singletons, Mathematical Engine)
   - `features/` (Dashboard, Fader-Panel, Canvas-Graph, A/B-Player)
+    > **Abweichung:** umgesetzt als `pages/` (Seiten und ihre Bereiche, z. B. `pages/home/app-interface/`) und `layout/` (Header, Footer).
   - `shared/` (UI-Primitives, Custom Slider, Buttons, Pipes)
   - `models/` (Interfaces für Frequenzen, dB HL, Biquad-Parameter, Export-Profile)
 
 ### 1.2 Eingabematrix & Reactive Forms
 
-- [ ] Implementierung des Frequenz-Grids basierend auf Standard-Audiometrie:
+- [x] Implementierung des Frequenz-Grids basierend auf Standard-Audiometrie:
   - Oktav-/Terzbänder: `125 Hz, 250 Hz, 500 Hz, 1 kHz, 2 kHz, 4 kHz, 8 kHz` (optional erweiterbar auf 1.5, 3, 6 kHz).
 - [ ] Kanalgetrennte Eingabe (Stereo: Linkes Ohr / Rechtes Ohr) im Bereich von `-10 dB HL bis 120 dB HL`.
 - [ ] Angular `ReactiveFormsModule` mit strikter Typisierung und Validierung.
@@ -41,7 +42,10 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 ### 1.4 Visual Engine (HTML5 Canvas Curve)
 
-- [ ] Dynamisches Zeichnen des Audiogramm-Koordinatensystems (Frequenzen logarithmisch skaliert, dB-Skala invertiert nach medizinischem Standard: 0 dB oben, Hörverlust nach unten abfallend).
+> **Abweichung:** Der Audiogramm-Graph ist als **SVG statt Canvas** umgesetzt (`app-interface.html`).
+
+- [x] Dynamisches Zeichnen des Audiogramm-Koordinatensystems (Frequenzen logarithmisch skaliert, dB-Skala invertiert nach medizinischem Standard: 0 dB oben, Hörverlust nach unten abfallend).
+  > **Offen:** Die x-Positionen sind gleichmäßig nach Index verteilt. Bei reinen Oktaven entspricht das einer Log-Skala, mit 1,5 / 3 / 6 kHz nicht mehr.
 - [ ] Zeichnen der individuellen Hörschwellen (Blau = Links, Rot = Rechts; Kennzeichnung mit Kreuzen und Kreisen).
 - [ ] Echtzeit-Rendering der berechneten Filterkurve bei Fader-Bewegung via `requestAnimationFrame`.
 
@@ -60,6 +64,23 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Stereospezifische Zuweisung (`Channel: L` und `Channel: R`).
   - Formatierung als `GraphicEQ` oder parametrische Filterkette (`Filter: ON PK Fc ... Hz Gain ... dB Q ...`).
 - [ ] One-Click Client-Download der generierten `config.txt` via Blob-API.
+
+#### Umsetzungsplan Export
+
+- [x] **1. Durchstich:** `ExportBtn` meldet den Klick per `output()`, der `Export`-Service lädt Text per Blob/Object-URL herunter, `AppInterface` ruft `configDownload()` auf (noch mit Platzhalter-Text).
+- [x] **2. Datenmodell** (`models/interfaces.ts`):
+  - `FilterConfig`: eine Filterzeile (`frequency` in Hz, `gain` in dB, `qFactor`).
+  - `ExportConfig`: `preAmp` (dB, immer negativ, gemeinsam für beide Ohren) + `leftEar` / `rightEar` als `FilterConfig[]`.
+- [ ] **3. Generator** als reine Funktion `ExportConfig → string`, testgetrieben mit Vitest. Zahlenformat mit Punkt, Rundung, `-0` beachten. Offener Grenzfall: Ohr ohne Filter (`[]`).
+- [ ] **4. Anschluss an `EqCalc`:** Werte als Signals, Gain- und Pre-Amp-Berechnung, Export-Button `disabled`, solange beide Ohren komplett 0 sind.
+
+**Entscheidungen:**
+
+- Download-Methode bekommt Inhalt und Dateinamen als Parameter (unabhängig vom Format).
+- Jeder Filter hat eine eigene Frequenz, kein festes 7er-Array (Halboktaven wie 1,5 / 3 / 6 kHz und OPRA-Profile müssen passen).
+- Pre-Amp gemeinsam für beide Ohren, damit das Verhältnis zwischen links und rechts erhalten bleibt.
+- Das Modell hält nur Zahlen; `ON`, `PK` und `L`/`R` schreibt der Generator.
+- Für den Kopfhörer-EQ zählt die Luftleitung im Audiogramm, nicht die Knochenleitung.
 
 ---
 
