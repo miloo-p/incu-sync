@@ -24,9 +24,3 @@ export interface ExportConfig {
   /** Filters for the right ear. One entry = one `Filter:` line in the export. */
   rightEar: FilterConfig[];
 }
-
-/* const example: ExportConfig = {
-  preAmp: -7,
-  leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
-  rightEar: [],
-}; */
