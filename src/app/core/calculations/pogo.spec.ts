@@ -30,4 +30,12 @@ describe('calculatePogoGain', () => {
     // Prüfen
     expect(result).toBe(0); // 0 - 10 = -10, cut off at 0
   });
+
+  it('caps the gain at 30 dB', () => {
+    // Ausführen
+    const result = calculatePogoGain(4000, 120);
+
+    // Prüfen
+    expect(result).toBe(30); // 60 - 0 = 60, cut off at 30
+  });
 });
