@@ -65,12 +65,14 @@
 
   <div class="channel-toggle">
     <button
+      type="button"
       [class.active]="eqService.activeChannel === 'right'"
       (click)="eqService.setChannel('right')"
     >
       Rechtes Ohr (O)
     </button>
     <button
+      type="button"
       [class.active]="eqService.activeChannel === 'left'"
       (click)="eqService.setChannel('left')"
     >
