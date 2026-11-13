@@ -86,6 +86,7 @@ export class AppInterface {
     this.draggingIndex = null;
   }
 
+  /** Generates the Equalizer APO config and downloads it as `config.txt`. */
   configDownload() {
     // Fixed values until step 4 calculates them from the audiogram in EqCalc.
     const config: ExportConfig = {

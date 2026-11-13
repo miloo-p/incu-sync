@@ -12,6 +12,7 @@ export class ExportBtn {
    */
   btnClick = output<void>();
 
+  /** Passes the click on to the parent via `btnClick`. */
   onButtonClick(): void {
     this.btnClick.emit();
   }
