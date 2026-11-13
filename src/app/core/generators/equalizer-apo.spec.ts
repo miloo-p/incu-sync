@@ -72,4 +72,20 @@ describe('buildEqualizerConfiguration', () => {
     // Prüfen
     expect(result).toBe(expected);
   });
+
+  it('writes the channel without an empty line when an ear has no filters', () => {
+    // Vorbereiten
+    const example: ExportConfig = {
+      preAmp: -7,
+      leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
+      rightEar: [],
+    };
+    const expected = 'Preamp: -7 dB\nChannel: L\nFilter: ON PK Fc 125 Hz Gain 3 dB Q 1.41\nChannel: R\n';
+
+    // Ausführen
+    const result = buildEqualizerConfiguration(example);
+
+    // Prüfen
+    expect(result).toBe(expected);
+  });
 });
