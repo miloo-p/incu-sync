@@ -79,9 +79,11 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Jede Zeile endet mit `\n`; ein Ohr ohne Filter erzeugt nur seine `Channel:`-Zeile.
   - Eingebaut in `AppInterface.configDownload()`, vorerst mit festen Beispielwerten.
 - [ ] **4. Anschluss an `EqCalc`:** Werte als Signals, Gain- und Pre-Amp-Berechnung, Export-Button `disabled`, solange beide Ohren komplett 0 sind.
-  - Gain nach **POGO** (siehe 1.3), Q 1.41 für das Oktav-Raster.
-  - Pre-Amp **sicher nach unten** runden (z. B. −30.4 → −31), das gehört zur Berechnung, nicht in den Generator.
-  - Ungenutzten Import `EqCalc` in `models/interfaces.ts` entfernen (Modelle sollen nichts aus `services/` importieren).
+  - [x] **4.1** Ohr-Werte und aktives Ohr in `EqCalc` als Signals (`update` mit neuem Array); ungenutzten Import `EqCalc` in `models/interfaces.ts` entfernt (Modelle sollen nichts aus `services/` importieren).
+  - [x] **4.2** Gain nach **POGO** (siehe 1.3): reine Funktion `calculatePogoGain(frequency, hearingLossDb)` in `core/calculations/pogo.ts`, testgetrieben (3 Tests).
+  - [ ] **4.3** Pre-Amp **sicher nach unten** runden (z. B. −30.4 → −31), das gehört zur Berechnung, nicht in den Generator.
+  - [ ] **4.4** `ExportConfig` als `computed()` mit Q 1.41 für das Oktav-Raster; ersetzt die festen Werte in `configDownload()`.
+  - [ ] **4.5** Export-Button `disabled`, solange beide Ohren komplett 0 sind.
   - > **Edit:** Obergrenze für den Gain pro Filter (z. B. 30 dB, Wert noch offen). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
 - [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
   - Hinweis in der App neben dem Export-Button: Lautstärke einmal vorsichtig einstellen und nicht weiter hochdrehen; optional ein Limiter-Plugin (VST) in Equalizer APO.
