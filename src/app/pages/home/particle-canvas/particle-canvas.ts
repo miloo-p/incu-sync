@@ -508,16 +508,10 @@ export class ParticleCanvas implements AfterViewInit, OnDestroy {
     this.pushAge += dt;
     const pushPhase = this.pushAge / PULSE_PUSH_RISE;
     const push = pushPhase < 50 ? PULSE_PUSH_DISTANCE * pushPhase * Math.exp(1 - pushPhase) : 0;
+    const rightEarDb = this.eqService.rightEarDb();
+    const leftEarDb = this.eqService.leftEarDb();
     for (const p of this.particles) {
-      p.update(
-        this.scrollFactor,
-        this.time,
-        dt,
-        push,
-        hole,
-        this.eqService.rightEarDb,
-        this.eqService.leftEarDb,
-      );
+      p.update(this.scrollFactor, this.time, dt, push, hole, rightEarDb, leftEarDb);
     }
   }
 

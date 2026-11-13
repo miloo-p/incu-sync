@@ -1,5 +1,3 @@
-import { EqCalc } from '../core/services/eq-calc';
-
 /** Content of a single card in the features section. */
 export interface FeatureItem {
   title: string;

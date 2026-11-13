@@ -35,6 +35,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 ### 1.3 Core Math Engine (`EqCalculatorService`)
 
 - [ ] **Kompensationsformel:** Berechnung des Ziel-Gains anhand etablierter Anpassungsformeln (modifizierte Half-Gain-Rule: $\text{Gain} \approx 0.5 \times \text{dB HL}$ mit Gehörgangsresonanz-Dämpfung bei 3–4 kHz).
+  > **Entschieden:** POGO (McCandless & Lyregaard, 1983), nur der Gain-Teil: $\text{Gain} = 0.5 \times \text{dB HL} + k(f)$ mit $k = -10$ dB bei 125/250 Hz, $-5$ dB bei 500 Hz, sonst 0; negative Werte → 0. Keine zusätzliche „ab 20 dB HL“-Schwelle. Die Gehörgangsresonanz-Dämpfung entfällt, denn sie hängt beim Kopfhörer vom Modell ab und gehört zur OPRA-Korrektur in Phase 2. Die 125-Hz-Korrektur ist eine eigene Annahme, POGO nennt dafür keinen Wert.
 - [ ] **Digital Headroom Management:** Dynamische Pre-Amp-Kalkulation:
       $$\text{PreAmp} = -\max(\text{Gain}_{\text{left}}, \text{Gain}_{\text{right}}) - 1.0\text{ dB}$$
       Verhindert digitales Clipping bei Anhebungen vollständig.
@@ -59,11 +60,13 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 
 ### 1.6 Export Engine (Equalizer APO Target)
 
-- [ ] Parser-Implementierung zur Generierung des nativen Equalizer APO Formats:
+- [x] Parser-Implementierung zur Generierung des nativen Equalizer APO Formats:
   - Setzen des globalen Pre-Amps.
   - Stereospezifische Zuweisung (`Channel: L` und `Channel: R`).
   - Formatierung als `GraphicEQ` oder parametrische Filterkette (`Filter: ON PK Fc ... Hz Gain ... dB Q ...`).
-- [ ] One-Click Client-Download der generierten `config.txt` via Blob-API.
+    > **Entschieden:** parametrische Filterkette (`PK`), kein `GraphicEQ`.
+- [x] One-Click Client-Download der generierten `config.txt` via Blob-API.
+  > **Offen:** Die Werte sind bis Export-Schritt 4 fest eingetragen, noch nicht aus dem Audiogramm berechnet.
 
 #### Umsetzungsplan Export
 
@@ -71,8 +74,19 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 - [x] **2. Datenmodell** (`models/interfaces.ts`):
   - `FilterConfig`: eine Filterzeile (`frequency` in Hz, `gain` in dB, `qFactor`).
   - `ExportConfig`: `preAmp` (dB, immer negativ, gemeinsam für beide Ohren) + `leftEar` / `rightEar` als `FilterConfig[]`.
-- [ ] **3. Generator** als reine Funktion `ExportConfig → string`, testgetrieben mit Vitest. Zahlenformat mit Punkt, Rundung, `-0` beachten. Offener Grenzfall: Ohr ohne Filter (`[]`).
+- [x] **3. Generator** (`core/generators/equalizer-apo.ts`): reine Funktion `buildEqualizerConfiguration(preset: ExportConfig): string` mit Hilfsfunktion `buildFilterLines`, testgetrieben mit Vitest (5 Tests).
+  - Zahlenformat: Frequenz 0, Gain 1, Q 2, Pre-Amp 1 Nachkommastelle; keine `.0`, kein `-0`, immer Punkt.
+  - Jede Zeile endet mit `\n`; ein Ohr ohne Filter erzeugt nur seine `Channel:`-Zeile.
+  - Eingebaut in `AppInterface.configDownload()`, vorerst mit festen Beispielwerten.
 - [ ] **4. Anschluss an `EqCalc`:** Werte als Signals, Gain- und Pre-Amp-Berechnung, Export-Button `disabled`, solange beide Ohren komplett 0 sind.
+  - Gain nach **POGO** (siehe 1.3), Q 1.41 für das Oktav-Raster.
+  - Pre-Amp **sicher nach unten** runden (z. B. −30.4 → −31), das gehört zur Berechnung, nicht in den Generator.
+  - Ungenutzten Import `EqCalc` in `models/interfaces.ts` entfernen (Modelle sollen nichts aus `services/` importieren).
+  - > **Edit:** Obergrenze für den Gain pro Filter (z. B. 30 dB, Wert noch offen). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
+- [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
+  - Hinweis in der App neben dem Export-Button: Lautstärke einmal vorsichtig einstellen und nicht weiter hochdrehen; optional ein Limiter-Plugin (VST) in Equalizer APO.
+  - Derselbe Hinweis als `#`-Kommentarzeile oben in der `config.txt` (Equalizer APO ignoriert `#`-Zeilen).
+  - Hintergrund: Der Pre-Amp schützt nur vor digitalem Übersteuern, nicht vor zu hoher Lautstärke im Ohr. Die 20-dB-Grenze ist eine eigene Festlegung, es gibt keinen Standardwert.
 
 **Entscheidungen:**
 
@@ -80,6 +94,11 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 - Jeder Filter hat eine eigene Frequenz, kein festes 7er-Array (Halboktaven wie 1,5 / 3 / 6 kHz und OPRA-Profile müssen passen).
 - Pre-Amp gemeinsam für beide Ohren, damit das Verhältnis zwischen links und rechts erhalten bleibt.
 - Das Modell hält nur Zahlen; `ON`, `PK` und `L`/`R` schreibt der Generator.
+- Generator als reine Funktion statt Service: kein Zustand, kein `inject()`, Tests ohne `TestBed`.
+- Rechnen und Drucken getrennt: Der Generator formatiert nur, Gain und Pre-Amp berechnet Schritt 4.
+- Die Datei endet mit `\n` (Konvention für Textdateien, nichts klebt beim Anhängen aneinander).
+- Gain-Formel POGO statt NAL-R: linear (passt zu statischen PK-Filtern), etabliert, und die NAL-R-Konstanten sind in den Quellen widersprüchlich.
+- IncuSync ist kein Medizinprodukt und ersetzt keine Hörgeräte-Anpassung; ein Hinweis dazu gehört in die App.
 - Für den Kopfhörer-EQ zählt die Luftleitung im Audiogramm, nicht die Knochenleitung.
 
 ---
@@ -95,6 +114,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
 - [ ] **Dual-Matrix-Kalkulation:**
       $$\text{Finale Kurve} = \text{Gehörkompensation (dB HL)} + \text{AutoEQ-Hardwarekorrektur}$$
 - [ ] Automatisches Nachjustieren des Pre-Amps auf Basis der kombinierten Gesamtkurve.
+- [ ] > **Edit:** **Output-Begrenzung (Limiter)** mit der Unbehaglichkeitsschwelle (US) aus dem Audiogramm, angelehnt an den Output-Teil von POGO. Braucht eine erweiterte Eingabe (US-Werte) und einen Bezug zwischen digitalem Pegel und Lautstärke im Ohr (Windows-Lautstärke, Kopfhörer).
 
 ### 2.2 Desktop Export Hub (Strategy Pattern)
 
