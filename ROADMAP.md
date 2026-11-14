@@ -82,9 +82,12 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - [x] **4.1** Ohr-Werte und aktives Ohr in `EqCalc` als Signals (`update` mit neuem Array); ungenutzten Import `EqCalc` in `models/interfaces.ts` entfernt (Modelle sollen nichts aus `services/` importieren).
   - [x] **4.2** Gain nach **POGO** (siehe 1.3): reine Funktion `calculatePogoGain(frequency, hearingLossDb)` in `core/calculations/pogo.ts`, mit Obergrenze 30 dB, testgetrieben (4 Tests).
   - [x] **4.3** Pre-Amp **sicher nach unten** runden (z. B. −30.4 → −31), das gehört zur Berechnung, nicht in den Generator: reine Funktion `calculatePreAmp(gainsDb)` in `core/calculations/pre-amp.ts` (3 Tests).
-    > **Offen:** Benachbarte PK-Filter überlappen sich und addieren sich an den Flanken. Nachgerechnet mit der RBJ-Formel (Q 1.41): Bei flach 40 dB HL ist das Ziel 20 dB, die Filter liefern aber bis zu 31.8 dB. Übernimmt man die POGO-Werte direkt als Filter-Gain, wird um bis zu ~12 dB zu stark angehoben, und der Pre-Amp (−21 dB) schützt nicht mehr vor Clipping. Mögliche Lösung: die Filter-Gains schrittweise korrigieren, bis die Summe an den Mittenfrequenzen das POGO-Ziel trifft (im Skript getestet: trifft genau, Spitze 20.1 dB). Der Pre-Amp kommt dann aus den POGO-Zielen, nicht aus den korrigierten Filter-Gains.
-  - [ ] **4.4** `ExportConfig` als `computed()` mit Q 1.41 für das Oktav-Raster; ersetzt die festen Werte in `configDownload()`.
-  - [ ] **4.5** Export-Button `disabled`, solange beide Ohren komplett 0 sind.
+  - [x] **4.4** Filter-Gains korrigieren: `correctFilterGains` und `combinedGainDb` in `core/calculations/filter-curve.ts` (5 Tests). Benachbarte PK-Filter überlappen sich und addieren sich an den Flanken: Bei flach 40 dB HL ist das Ziel 20 dB, unkorrigierte Filter liefern bis zu 31.8 dB. Die Korrektur misst 100-mal die Summe an jeder Mittenfrequenz und verschiebt jeden Gain um die Abweichung vom Ziel.
+    - Gerechnet mit der analogen Filterformel aus dem Audio EQ Cookbook (ohne Abtastrate). Die echten Digitalfilter liegen bei 4–8 kHz bis ~1 dB darunter, also auf der sicheren Seite.
+    - Filter-Gains dürfen leicht negativ werden: Eine kleine Absenkung gleicht das Überschwappen vom starken Nachbarn aus.
+    - Der Pre-Amp kommt aus den **POGO-Zielen**, nicht aus den korrigierten Filter-Gains. Die sind kleiner, der Pre-Amp wäre sonst zu knapp.
+  - [ ] **4.5** `ExportConfig` als `computed()`: POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`.
+  - [ ] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind.
   - [x] > **Edit:** Obergrenze für den Gain pro Filter: **30 dB** (`MAX_GAIN_DB` in `pogo.ts`). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
 - [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
   - Hinweis in der App neben dem Export-Button: Lautstärke einmal vorsichtig einstellen und nicht weiter hochdrehen; optional ein Limiter-Plugin (VST) in Equalizer APO.
