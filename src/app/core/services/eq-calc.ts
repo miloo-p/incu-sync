@@ -1,4 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
+import { ExportConfig, FilterConfig } from '../../models/interfaces';
+import { correctFilterGains } from '../calculations/filter-curve';
+import { calculatePogoGain } from '../calculations/pogo';
+import { calculatePreAmp } from '../calculations/pre-amp';
+
+/** Q for filters one octave wide, matching the octave grid of `frequencies`. */
+const OCTAVE_Q = 1.41;
 
 /** Holds the audiogram both ears are edited in and which ear is currently active. */
 @Injectable({
@@ -15,6 +22,21 @@ export class EqCalc {
 
   /** The ear that inputs and drag handles currently edit. */
   readonly activeChannel = signal<'right' | 'left'>('right');
+
+  /**
+   * The Equalizer APO settings for the current audiogram. Recalculates by itself whenever an ear changes.
+   * The pre-amp comes from the POGO targets, not from the corrected gains: those are smaller,
+   * so the pre-amp would be too small and the curve could clip.
+   */
+  readonly exportConfig = computed((): ExportConfig => {
+    const leftTargets = this.toPogoTargets(this.leftEarDb());
+    const rightTargets = this.toPogoTargets(this.rightEarDb());
+    return {
+      preAmp: calculatePreAmp([...leftTargets, ...rightTargets].map((target) => target.gain)),
+      leftEar: correctFilterGains(leftTargets),
+      rightEar: correctFilterGains(rightTargets),
+    };
+  });
 
   /**
    * Switches which ear is edited.
@@ -35,5 +57,19 @@ export class EqCalc {
     const ear = this.activeChannel() === 'right' ? this.rightEarDb : this.leftEarDb;
     // A new array, not a changed one: a signal only notifies when its value is a different object.
     ear.update((values) => values.map((value, i) => (i === index ? newDbValue : value)));
+  }
+
+  /**
+   * Turns the thresholds of one ear into one filter per frequency, with the POGO gain as its target.
+   *
+   * @param hearingLossDb - Thresholds in dB HL, one per entry in `frequencies`.
+   * @returns One octave-wide filter per frequency.
+   */
+  private toPogoTargets(hearingLossDb: number[]): FilterConfig[] {
+    return this.frequencies.map((frequency, i) => ({
+      frequency,
+      gain: calculatePogoGain(frequency, hearingLossDb[i]),
+      qFactor: OCTAVE_Q,
+    }));
   }
 }

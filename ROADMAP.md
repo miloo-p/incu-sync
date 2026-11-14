@@ -66,7 +66,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Formatierung als `GraphicEQ` oder parametrische Filterkette (`Filter: ON PK Fc ... Hz Gain ... dB Q ...`).
     > **Entschieden:** parametrische Filterkette (`PK`), kein `GraphicEQ`.
 - [x] One-Click Client-Download der generierten `config.txt` via Blob-API.
-  > **Offen:** Die Werte sind bis Export-Schritt 4 fest eingetragen, noch nicht aus dem Audiogramm berechnet.
+  > Seit Export-Schritt 4.5 kommen die Werte aus dem Audiogramm (`EqCalc.exportConfig`).
 
 #### Umsetzungsplan Export
 
@@ -86,7 +86,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
     - Gerechnet mit der analogen Filterformel aus dem Audio EQ Cookbook (ohne Abtastrate). Die echten Digitalfilter liegen bei 4–8 kHz bis ~1 dB darunter, also auf der sicheren Seite.
     - Filter-Gains dürfen leicht negativ werden: Eine kleine Absenkung gleicht das Überschwappen vom starken Nachbarn aus.
     - Der Pre-Amp kommt aus den **POGO-Zielen**, nicht aus den korrigierten Filter-Gains. Die sind kleiner, der Pre-Amp wäre sonst zu knapp.
-  - [ ] **4.5** `ExportConfig` als `computed()`: POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`.
+  - [x] **4.5** `ExportConfig` als `computed()` (`EqCalc.exportConfig`): POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`. Liegt im Service statt in der Komponente, weil später auch der A/B-Player dieselben Filter braucht.
   - [ ] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind.
   - [x] > **Edit:** Obergrenze für den Gain pro Filter: **30 dB** (`MAX_GAIN_DB` in `pogo.ts`). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
 - [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):

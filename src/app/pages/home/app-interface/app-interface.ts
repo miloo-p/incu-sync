@@ -2,7 +2,6 @@ import { Component, HostListener, inject } from '@angular/core';
 import { buildEqualizerConfiguration } from '../../../core/generators/equalizer-apo';
 import { EqCalc } from '../../../core/services/eq-calc';
 import { Export } from '../../../core/services/export';
-import { ExportConfig } from '../../../models/interfaces';
 import { ExportBtn } from '../../../shared/components/export-btn/export-btn';
 
 @Component({
@@ -88,13 +87,7 @@ export class AppInterface {
 
   /** Generates the Equalizer APO config and downloads it as `config.txt`. */
   configDownload() {
-    // Fixed values until step 4 calculates them from the audiogram in EqCalc.
-    const config: ExportConfig = {
-      preAmp: -7,
-      leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
-      rightEar: [{ frequency: 125, gain: 2, qFactor: 1.41 }],
-    };
-    const configText = buildEqualizerConfiguration(config);
+    const configText = buildEqualizerConfiguration(this.eqService.exportConfig());
     const filename = 'config.txt';
     this.exportService.download(configText, filename);
   }
