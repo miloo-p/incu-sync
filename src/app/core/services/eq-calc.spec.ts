@@ -29,6 +29,19 @@ describe('EqCalc', () => {
     expect(service.rightEarDb()).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 
+  it('knows when an ear has a hearing loss', () => {
+    // Vorbereiten
+    const before = service.hasHearingLoss();
+    service.setChannel('left');
+
+    // Ausführen
+    service.updateValue(6, 10);
+
+    // Prüfen
+    expect(before).toBe(false);
+    expect(service.hasHearingLoss()).toBe(true);
+  });
+
   it('recalculates the export config when the audiogram changes', () => {
     // Vorbereiten
     const before = service.exportConfig();

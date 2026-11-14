@@ -86,4 +86,7 @@
   </div>
 </section>
 
-<app-export-btn (btnClick)="configDownload()"></app-export-btn>
+<app-export-btn
+  [disabled]="!eqService.hasHearingLoss()"
+  (btnClick)="configDownload()"
+></app-export-btn>

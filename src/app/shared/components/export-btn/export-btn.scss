@@ -42,6 +42,15 @@
     background-color: color-mix(in srgb, var(--surface-chassis) 85%, transparent);
   }
 
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:disabled span {
+    background-color: var(--surface-chassis);
+  }
+
   @include respond-to(md) {
     min-width: 8.75rem;
     font-size: var(--fs-body);

@@ -19,4 +19,18 @@ describe('ExportBtn', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('disables the button when the parent sets disabled', async () => {
+    // Vorbereiten
+    const button: HTMLButtonElement = fixture.nativeElement.querySelector('button');
+    const enabledBefore = !button.disabled;
+
+    // Ausführen
+    fixture.componentRef.setInput('disabled', true);
+    await fixture.whenStable();
+
+    // Prüfen
+    expect(enabledBefore).toBe(true);
+    expect(button.disabled).toBe(true);
+  });
 });

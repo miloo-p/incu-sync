@@ -1,4 +1,4 @@
-import { Component, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-export-btn',
@@ -7,6 +7,9 @@ import { Component, output } from '@angular/core';
   styleUrl: './export-btn.scss',
 })
 export class ExportBtn {
+  /** Set by the parent; while true, the button can't be clicked. */
+  disabled = input(false);
+
   /**
    * Fires when the user clicks the button.
    */

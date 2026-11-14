@@ -23,6 +23,11 @@ export class EqCalc {
   /** The ear that inputs and drag handles currently edit. */
   readonly activeChannel = signal<'right' | 'left'>('right');
 
+  /** True as soon as one ear has a threshold above 0 dB HL; until then there is nothing to export. */
+  readonly hasHearingLoss = computed(() =>
+    [...this.leftEarDb(), ...this.rightEarDb()].some((value) => value > 0),
+  );
+
   /**
    * The Equalizer APO settings for the current audiogram. Recalculates by itself whenever an ear changes.
    * The pre-amp comes from the POGO targets, not from the corrected gains: those are smaller,

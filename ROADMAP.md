@@ -78,7 +78,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Zahlenformat: Frequenz 0, Gain 1, Q 2, Pre-Amp 1 Nachkommastelle; keine `.0`, kein `-0`, immer Punkt.
   - Jede Zeile endet mit `\n`; ein Ohr ohne Filter erzeugt nur seine `Channel:`-Zeile.
   - Eingebaut in `AppInterface.configDownload()`, vorerst mit festen Beispielwerten.
-- [ ] **4. Anschluss an `EqCalc`:** Werte als Signals, Gain- und Pre-Amp-Berechnung, Export-Button `disabled`, solange beide Ohren komplett 0 sind.
+- [x] **4. Anschluss an `EqCalc`:** Werte als Signals, Gain- und Pre-Amp-Berechnung, Export-Button `disabled`, solange beide Ohren komplett 0 sind.
   - [x] **4.1** Ohr-Werte und aktives Ohr in `EqCalc` als Signals (`update` mit neuem Array); ungenutzten Import `EqCalc` in `models/interfaces.ts` entfernt (Modelle sollen nichts aus `services/` importieren).
   - [x] **4.2** Gain nach **POGO** (siehe 1.3): reine Funktion `calculatePogoGain(frequency, hearingLossDb)` in `core/calculations/pogo.ts`, mit Obergrenze 30 dB, testgetrieben (4 Tests).
   - [x] **4.3** Pre-Amp **sicher nach unten** runden (z. B. −30.4 → −31), das gehört zur Berechnung, nicht in den Generator: reine Funktion `calculatePreAmp(gainsDb)` in `core/calculations/pre-amp.ts` (3 Tests).
@@ -87,7 +87,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
     - Filter-Gains dürfen leicht negativ werden: Eine kleine Absenkung gleicht das Überschwappen vom starken Nachbarn aus.
     - Der Pre-Amp kommt aus den **POGO-Zielen**, nicht aus den korrigierten Filter-Gains. Die sind kleiner, der Pre-Amp wäre sonst zu knapp.
   - [x] **4.5** `ExportConfig` als `computed()` (`EqCalc.exportConfig`): POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`. Liegt im Service statt in der Komponente, weil später auch der A/B-Player dieselben Filter braucht.
-  - [ ] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind.
+  - [x] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind: `ExportBtn` hat ein `input()` `disabled`, `EqCalc.hasHearingLoss` (`computed`) liefert den Wert.
   - [x] > **Edit:** Obergrenze für den Gain pro Filter: **30 dB** (`MAX_GAIN_DB` in `pogo.ts`). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
 - [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
   - Hinweis in der App neben dem Export-Button: Lautstärke einmal vorsichtig einstellen und nicht weiter hochdrehen; optional ein Limiter-Plugin (VST) in Equalizer APO.
