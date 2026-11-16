@@ -7,6 +7,12 @@ import { calculatePreAmp } from '../calculations/pre-amp';
 /** Q for filters one octave wide, matching the octave grid of `frequencies`. */
 const OCTAVE_Q = 1.41;
 
+/**
+ * From this POGO gain on (= 40 dB HL), the config carries a volume warning.
+ * Our own choice; there is no standard value.
+ */
+const VOLUME_WARNING_GAIN_DB = 20;
+
 /** Holds the audiogram both ears are edited in and which ear is currently active. */
 @Injectable({
   providedIn: 'root',
@@ -28,18 +34,33 @@ export class EqCalc {
     [...this.leftEarDb(), ...this.rightEarDb()].some((value) => value > 0),
   );
 
+  /** The POGO targets of both ears, one filter per frequency. Shared by the warning and the export. */
+  private readonly pogoTargets = computed(() => ({
+    left: this.toPogoTargets(this.leftEarDb()),
+    right: this.toPogoTargets(this.rightEarDb()),
+  }));
+
+  /**
+   * True as soon as one POGO gain reaches `VOLUME_WARNING_GAIN_DB`. The pre-amp only prevents
+   * digital clipping; it doesn't stop people from turning the volume up too far.
+   */
+  readonly needsVolumeWarning = computed(() => {
+    const { left, right } = this.pogoTargets();
+    return [...left, ...right].some((target) => target.gain >= VOLUME_WARNING_GAIN_DB);
+  });
+
   /**
    * The Equalizer APO settings for the current audiogram. Recalculates by itself whenever an ear changes.
    * The pre-amp comes from the POGO targets, not from the corrected gains: those are smaller,
    * so the pre-amp would be too small and the curve could clip.
    */
   readonly exportConfig = computed((): ExportConfig => {
-    const leftTargets = this.toPogoTargets(this.leftEarDb());
-    const rightTargets = this.toPogoTargets(this.rightEarDb());
+    const { left, right } = this.pogoTargets();
     return {
-      preAmp: calculatePreAmp([...leftTargets, ...rightTargets].map((target) => target.gain)),
-      leftEar: correctFilterGains(leftTargets),
-      rightEar: correctFilterGains(rightTargets),
+      preAmp: calculatePreAmp([...left, ...right].map((target) => target.gain)),
+      volumeWarning: this.needsVolumeWarning(),
+      leftEar: correctFilterGains(left),
+      rightEar: correctFilterGains(right),
     };
   });
 

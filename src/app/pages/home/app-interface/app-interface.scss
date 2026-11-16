@@ -215,3 +215,12 @@
     }
   }
 }
+
+// Volume hint below the export button (step 5)
+.volume-warning {
+  max-width: 32rem;
+  margin-top: var(--space-sm);
+
+  color: var(--text-secondary);
+  font-size: var(--fs-small);
+}

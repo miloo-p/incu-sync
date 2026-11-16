@@ -6,6 +6,7 @@ describe('buildEqualizerConfiguration', () => {
     // Vorbereiten
     const example: ExportConfig = {
       preAmp: -7,
+      volumeWarning: false,
       leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
       rightEar: [{ frequency: 125, gain: 2, qFactor: 1.41 }],
     };
@@ -23,6 +24,7 @@ describe('buildEqualizerConfiguration', () => {
     // Vorbereiten
     const example: ExportConfig = {
       preAmp: -7,
+      volumeWarning: false,
       leftEar: [
         { frequency: 125, gain: 3, qFactor: 1.41 },
         { frequency: 250, gain: 5, qFactor: 1.41 },
@@ -43,6 +45,7 @@ describe('buildEqualizerConfiguration', () => {
     // Vorbereiten
     const example: ExportConfig = {
       preAmp: -30.900000000000002,
+      volumeWarning: false,
       leftEar: [{ frequency: 1000.4, gain: 29.900000000000002, qFactor: Math.sqrt(2) }],
       rightEar: [{ frequency: 125, gain: 0.1 + 0.2, qFactor: 1.41 }],
     };
@@ -60,6 +63,7 @@ describe('buildEqualizerConfiguration', () => {
     // Vorbereiten
     const example: ExportConfig = {
       preAmp: -0.04,
+      volumeWarning: false,
       leftEar: [{ frequency: 1000.4, gain: -0.002, qFactor: Math.sqrt(2) }],
       rightEar: [{ frequency: 125, gain: 0.1 + 0.2, qFactor: 1.41 }],
     };
@@ -77,6 +81,7 @@ describe('buildEqualizerConfiguration', () => {
     // Vorbereiten
     const example: ExportConfig = {
       preAmp: -7,
+      volumeWarning: false,
       leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
       rightEar: [],
     };
@@ -87,5 +92,23 @@ describe('buildEqualizerConfiguration', () => {
 
     // Prüfen
     expect(result).toBe(expected);
+  });
+
+  it('puts the volume warning as a comment line above everything else', () => {
+    // Vorbereiten
+    const example: ExportConfig = {
+      preAmp: -21,
+      volumeWarning: true,
+      leftEar: [{ frequency: 1000, gain: 20, qFactor: 1.41 }],
+      rightEar: [],
+    };
+
+    // Ausführen
+    const result = buildEqualizerConfiguration(example);
+
+    // Prüfen: one `#` line, then the config exactly as without the warning
+    expect(result).toMatch(
+      /^# [^\n]+\nPreamp: -21 dB\nChannel: L\nFilter: ON PK Fc 1000 Hz Gain 20 dB Q 1.41\nChannel: R\n$/,
+    );
   });
 });

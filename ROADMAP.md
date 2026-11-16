@@ -89,10 +89,12 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - [x] **4.5** `ExportConfig` als `computed()` (`EqCalc.exportConfig`): POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`. Liegt im Service statt in der Komponente, weil später auch der A/B-Player dieselben Filter braucht.
   - [x] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind: `ExportBtn` hat ein `input()` `disabled`, `EqCalc.hasHearingLoss` (`computed`) liefert den Wert.
   - [x] > **Edit:** Obergrenze für den Gain pro Filter: **30 dB** (`MAX_GAIN_DB` in `pogo.ts`). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
-- [ ] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
+- [x] > **Edit:** **5. Lautstärke-Hinweis** ab einem maximalen Gain von **20 dB** (nach POGO = 40 dB HL, mittelgradiger Hörverlust):
   - Hinweis in der App neben dem Export-Button: Lautstärke einmal vorsichtig einstellen und nicht weiter hochdrehen; optional ein Limiter-Plugin (VST) in Equalizer APO.
   - Derselbe Hinweis als `#`-Kommentarzeile oben in der `config.txt` (Equalizer APO ignoriert `#`-Zeilen).
   - Hintergrund: Der Pre-Amp schützt nur vor digitalem Übersteuern, nicht vor zu hoher Lautstärke im Ohr. Die 20-dB-Grenze ist eine eigene Festlegung, es gibt keinen Standardwert.
+  - Umgesetzt: `EqCalc.needsVolumeWarning` (`computed`, Grenze `VOLUME_WARNING_GAIN_DB`, gemessen an den POGO-Zielen), `ExportConfig.volumeWarning`, Kommentarzeile im Generator.
+  - > **Edit:** Der Hinweis ist allgemeingültig formuliert (ohne Limiter-Empfehlung) und steht in der App **immer** unter dem Export-Button, nicht erst ab 20 dB. Die `#`-Zeile in der `config.txt` kommt weiterhin erst ab 20 dB.
 
 **Entscheidungen:**
 

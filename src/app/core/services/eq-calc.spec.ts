@@ -42,6 +42,19 @@ describe('EqCalc', () => {
     expect(service.hasHearingLoss()).toBe(true);
   });
 
+  it('warns about the volume from a gain of 20 dB on', () => {
+    // Ausführen: 38 dB HL at 1 kHz → POGO 19 dB
+    service.updateValue(3, 38);
+    const at19 = service.needsVolumeWarning();
+    // 40 dB HL → POGO 20 dB
+    service.updateValue(3, 40);
+    const at20 = service.needsVolumeWarning();
+
+    // Prüfen
+    expect(at19).toBe(false);
+    expect(at20).toBe(true);
+  });
+
   it('recalculates the export config when the audiogram changes', () => {
     // Vorbereiten
     const before = service.exportConfig();
@@ -55,5 +68,7 @@ describe('EqCalc', () => {
     expect(after.preAmp).toBe(-21); // POGO target 20 dB + 1 dB headroom
     expect(combinedGainDb(after.rightEar, 1000)).toBeCloseTo(20, 1);
     expect(after.leftEar.every((filter) => filter.gain === 0)).toBe(true);
+    expect(before.volumeWarning).toBe(false);
+    expect(after.volumeWarning).toBe(true); // 20 dB gain reaches the warning
   });
 });

@@ -19,6 +19,8 @@ export interface FilterConfig {
 export interface ExportConfig {
   /** Pre-amp in dB, shared by both ears. Always negative: it lowers the overall level so the boosting filters can't clip. */
   preAmp: number;
+  /** True if the boost is strong enough that the export should carry a volume warning. */
+  volumeWarning: boolean;
   /** Filters for the left ear. One entry = one `Filter:` line in the export. */
   leftEar: FilterConfig[];
   /** Filters for the right ear. One entry = one `Filter:` line in the export. */
