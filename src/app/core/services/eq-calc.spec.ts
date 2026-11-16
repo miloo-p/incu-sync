@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 
-import { combinedGainDb } from '../calculations/filter-curve';
 import { EqCalc } from './eq-calc';
 
 describe('EqCalc', () => {
@@ -66,7 +65,7 @@ describe('EqCalc', () => {
     // Prüfen
     expect(before.preAmp).toBe(-1); // no gain yet, only the headroom
     expect(after.preAmp).toBe(-21); // POGO target 20 dB + 1 dB headroom
-    expect(combinedGainDb(after.rightEar, 1000)).toBeCloseTo(20, 1);
+    expect(after.rightEar[3].gain).toBe(20); // the POGO target goes into the export unchanged
     expect(after.leftEar.every((filter) => filter.gain === 0)).toBe(true);
     expect(before.volumeWarning).toBe(false);
     expect(after.volumeWarning).toBe(true); // 20 dB gain reaches the warning

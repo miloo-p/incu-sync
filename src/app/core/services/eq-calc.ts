@@ -1,6 +1,5 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ExportConfig, FilterConfig } from '../../models/interfaces';
-import { correctFilterGains } from '../calculations/filter-curve';
 import { calculatePogoGain } from '../calculations/pogo';
 import { calculatePreAmp } from '../calculations/pre-amp';
 
@@ -51,16 +50,16 @@ export class EqCalc {
 
   /**
    * The Equalizer APO settings for the current audiogram. Recalculates by itself whenever an ear changes.
-   * The pre-amp comes from the POGO targets, not from the corrected gains: those are smaller,
-   * so the pre-amp would be too small and the curve could clip.
+   * The export is a `GraphicEQ`, which draws the curve straight through its points: the POGO targets
+   * go in unchanged, and since the curve never rises above its highest point, the pre-amp from them is enough.
    */
   readonly exportConfig = computed((): ExportConfig => {
     const { left, right } = this.pogoTargets();
     return {
       preAmp: calculatePreAmp([...left, ...right].map((target) => target.gain)),
       volumeWarning: this.needsVolumeWarning(),
-      leftEar: correctFilterGains(left),
-      rightEar: correctFilterGains(right),
+      leftEar: left,
+      rightEar: right,
     };
   });
 

@@ -9,31 +9,36 @@ const VOLUME_WARNING_LINE =
 
 /**
  * Builds the text of an Equalizer APO `config.txt`: an optional volume warning,
- * the shared pre-amp, then `Channel: L` and `Channel: R`, each followed by its filter lines.
+ * the shared pre-amp, then `Channel: L` and `Channel: R`, each followed by its `GraphicEQ:` line.
  * Numbers are rounded for readability and every line ends with `\n`.
  *
- * @param preset - Pre-amp, volume warning and filters for both ears.
+ * @param preset - Pre-amp, volume warning and curve points for both ears.
  * @returns The complete file content, ready to download.
  */
 export function buildEqualizerConfiguration(preset: ExportConfig): string {
   const warning = preset.volumeWarning ? VOLUME_WARNING_LINE : '';
-  const leftFilters = buildFilterLines(preset.leftEar);
-  const rightFilters = buildFilterLines(preset.rightEar);
+  const leftCurve = buildGraphicEqLine(preset.leftEar);
+  const rightCurve = buildGraphicEqLine(preset.rightEar);
 
-  return `${warning}Preamp: ${Number(preset.preAmp.toFixed(1))} dB\nChannel: L\n${leftFilters}Channel: R\n${rightFilters}`;
+  return `${warning}Preamp: ${Number(preset.preAmp.toFixed(1))} dB\nChannel: L\n${leftCurve}Channel: R\n${rightCurve}`;
 }
 
 /**
- * Turns a list of filters into `Filter: ON PK …` lines.
- * Every line ends with `\n`, so an empty list adds nothing, not even an empty line.
+ * Turns the points of one ear into a single `GraphicEQ: 125 0; 250 5; …` line.
+ * GraphicEQ continues its last gain flat up to 20 kHz, so a closing point one octave
+ * above the highest frequency lets the boost fall back to 0 dB instead.
+ * An empty list adds nothing, not even an empty line.
  *
- * @param filters - The filters of one ear.
- * @returns One line per filter, or an empty string if there are none.
+ * @param filters - The curve points of one ear, sorted by frequency.
+ * @returns The `GraphicEQ:` line, or an empty string if there are no points.
  */
-function buildFilterLines(filters: FilterConfig[]): string {
-  return filters
-    .map((filter): string => {
-      return `Filter: ON PK Fc ${Number(filter.frequency.toFixed(0))} Hz Gain ${Number(filter.gain.toFixed(1))} dB Q ${Number(filter.qFactor.toFixed(2))}\n`;
-    })
-    .join('');
+function buildGraphicEqLine(filters: FilterConfig[]): string {
+  if (filters.length === 0) {
+    return '';
+  }
+  const points = filters.map(
+    (filter) => `${Number(filter.frequency.toFixed(0))} ${Number(filter.gain.toFixed(1))}`,
+  );
+  const closingFrequency = filters[filters.length - 1].frequency * 2;
+  return `GraphicEQ: ${points.join('; ')}; ${Number(closingFrequency.toFixed(0))} 0\n`;
 }

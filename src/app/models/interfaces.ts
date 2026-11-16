@@ -5,7 +5,10 @@ export interface FeatureItem {
   imagePath: string;
 }
 
-/** One peaking filter, written as one `Filter:` line in the Equalizer APO export. */
+/**
+ * One point of the EQ curve. The Equalizer APO export writes it as a `frequency gain` pair
+ * in the `GraphicEQ:` line; `qFactor` is only needed when it is used as a peaking filter (A/B player).
+ */
 export interface FilterConfig {
   /** Frequency given as Hz */
   frequency: number;
@@ -21,8 +24,8 @@ export interface ExportConfig {
   preAmp: number;
   /** True if the boost is strong enough that the export should carry a volume warning. */
   volumeWarning: boolean;
-  /** Filters for the left ear. One entry = one `Filter:` line in the export. */
+  /** Curve points for the left ear, sorted by frequency. Together they form its `GraphicEQ:` line. */
   leftEar: FilterConfig[];
-  /** Filters for the right ear. One entry = one `Filter:` line in the export. */
+  /** Curve points for the right ear, sorted by frequency. Together they form its `GraphicEQ:` line. */
   rightEar: FilterConfig[];
 }

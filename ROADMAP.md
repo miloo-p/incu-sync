@@ -65,6 +65,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Stereospezifische Zuweisung (`Channel: L` und `Channel: R`).
   - Formatierung als `GraphicEQ` oder parametrische Filterkette (`Filter: ON PK Fc ... Hz Gain ... dB Q ...`).
     > **Entschieden:** parametrische Filterkette (`PK`), kein `GraphicEQ`.
+    > **Edit:** Abgelöst durch Export-Schritt 6: Export als **`GraphicEQ`**.
 - [x] One-Click Client-Download der generierten `config.txt` via Blob-API.
   > Seit Export-Schritt 4.5 kommen die Werte aus dem Audiogramm (`EqCalc.exportConfig`).
 
@@ -86,6 +87,7 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
     - Gerechnet mit der analogen Filterformel aus dem Audio EQ Cookbook (ohne Abtastrate). Die echten Digitalfilter liegen bei 4–8 kHz bis ~1 dB darunter, also auf der sicheren Seite.
     - Filter-Gains dürfen leicht negativ werden: Eine kleine Absenkung gleicht das Überschwappen vom starken Nachbarn aus.
     - Der Pre-Amp kommt aus den **POGO-Zielen**, nicht aus den korrigierten Filter-Gains. Die sind kleiner, der Pre-Amp wäre sonst zu knapp.
+    - Seit Schritt 6 nicht mehr im Export; bleibt für den A/B-Player (Web Audio hat PK-Filter eingebaut).
   - [x] **4.5** `ExportConfig` als `computed()` (`EqCalc.exportConfig`): POGO-Ziele mit Q 1.41 → `correctFilterGains` → Filter, Pre-Amp aus den Zielen; ersetzt die festen Werte in `configDownload()`. Liegt im Service statt in der Komponente, weil später auch der A/B-Player dieselben Filter braucht.
   - [x] **4.6** Export-Button `disabled`, solange beide Ohren komplett 0 sind: `ExportBtn` hat ein `input()` `disabled`, `EqCalc.hasHearingLoss` (`computed`) liefert den Wert.
   - [x] > **Edit:** Obergrenze für den Gain pro Filter: **30 dB** (`MAX_GAIN_DB` in `pogo.ts`). Bei sehr großem Hörverlust würde POGO sonst Anhebungen liefern, bei denen Kopfhörer verzerren; dann ist ein Hörgerät die bessere Lösung.
@@ -95,19 +97,36 @@ IncuSync überbrückt die Lücke zwischen klinischer Audiometrie (Tonaudiogramme
   - Hintergrund: Der Pre-Amp schützt nur vor digitalem Übersteuern, nicht vor zu hoher Lautstärke im Ohr. Die 20-dB-Grenze ist eine eigene Festlegung, es gibt keinen Standardwert.
   - Umgesetzt: `EqCalc.needsVolumeWarning` (`computed`, Grenze `VOLUME_WARNING_GAIN_DB`, gemessen an den POGO-Zielen), `ExportConfig.volumeWarning`, Kommentarzeile im Generator.
   - > **Edit:** Der Hinweis ist allgemeingültig formuliert (ohne Limiter-Empfehlung) und steht in der App **immer** unter dem Export-Button, nicht erst ab 20 dB. Die `#`-Zeile in der `config.txt` kommt weiterhin erst ab 20 dB.
+- [x] > **Edit:** **6. Export als `GraphicEQ` statt PK-Filter** (nach dem Praxistest mit eigenem Audiogramm in Equalizer APO):
+  - Pro Ohr eine Zeile `GraphicEQ: 125 0; 250 0; …; 8000 30; 16000 0` mit den **POGO-Zielen direkt**, ohne Korrektur.
+  - Gründe: Die Kurve geht durch die Punkte und ist dazwischen gerade. Mit PK fehlten im Praxistest bei 6 kHz ~6 dB (24 statt 30). Es gibt keinen Rechentrick zwischen POGO und Datei, Halboktaven wären nur weitere Punkte, und im Editor erscheint eine Kurve statt 14 Zeilen.
+  - Schlusspunkt eine Oktave über dem höchsten Punkt mit 0 dB (bei 8 kHz → `16000 0`), weil GraphicEQ den letzten Wert sonst flach bis 20 kHz durchzieht.
+  - Pre-Amp unverändert aus den Zielen: Die Kurve steigt nie über ihren höchsten Punkt.
 
 **Entscheidungen:**
 
 - Download-Methode bekommt Inhalt und Dateinamen als Parameter (unabhängig vom Format).
 - Jeder Filter hat eine eigene Frequenz, kein festes 7er-Array (Halboktaven wie 1,5 / 3 / 6 kHz und OPRA-Profile müssen passen).
 - Pre-Amp gemeinsam für beide Ohren, damit das Verhältnis zwischen links und rechts erhalten bleibt.
-- Das Modell hält nur Zahlen; `ON`, `PK` und `L`/`R` schreibt der Generator.
+- Das Modell hält nur Zahlen; `GraphicEQ:`, `L`/`R` und den Schlusspunkt schreibt der Generator.
 - Generator als reine Funktion statt Service: kein Zustand, kein `inject()`, Tests ohne `TestBed`.
 - Rechnen und Drucken getrennt: Der Generator formatiert nur, Gain und Pre-Amp berechnet Schritt 4.
 - Die Datei endet mit `\n` (Konvention für Textdateien, nichts klebt beim Anhängen aneinander).
 - Gain-Formel POGO statt NAL-R: linear (passt zu statischen PK-Filtern), etabliert, und die NAL-R-Konstanten sind in den Quellen widersprüchlich.
 - IncuSync ist kein Medizinprodukt und ersetzt keine Hörgeräte-Anpassung; ein Hinweis dazu gehört in die App.
 - Für den Kopfhörer-EQ zählt die Luftleitung im Audiogramm, nicht die Knochenleitung.
+
+### 1.7 FAQ
+
+- [ ] > **Edit:** FAQ in der App (eigene Seite oder Abschnitt auf Home, noch offen). Die Fragen stammen aus dem Praxistest mit eigenem Audiogramm:
+  - **Welche Werte trage ich ein?** Die Kreise und Kreuze (O rechts, X links) auf der durchgezogenen Linie, also die Luftleitung. Nicht `>`/`<` (Knochenleitung, gestrichelt) und nicht das Zickzack-Zeichen (Vertäubung).
+  - **Wie lade ich die Datei in Equalizer APO?** In der `config.txt` per „Einbinden“ laden und alte Einträge (Pre-Amp, EQs) ausschalten. Nur geöffnet in einem Tab ist sie nicht aktiv. Im Analysepanel „Beginne bei: config.txt“ prüfen: Das Maximum sollte unter 0 dB liegen.
+  - **Warum klingt das so grell?** Die Höhen werden kräftig angehoben, vor allem 1,5–3 kHz, wo das Ohr am empfindlichsten ist. Das Gehirn ist nach Jahren mit Hörverlust einen dumpfen Klang gewohnt. Akustiker starten deshalb oft unterhalb des Formelwerts und steigern über Wochen.
+  - **Nimmt der Pre-Amp den Bass weg?** Nein. Er senkt alles gleich stark ab, die Höhen werden danach angehoben. Mit der Lautstärke ausgleichen, bis Sprache so laut ist wie vorher, aber nicht weiter.
+  - **Wie höre ich im Vergleich zu normal Hörenden?** Bei Hochtonverlust klingt ohne EQ alles basslastiger als für andere. POGO gleicht nur etwa die Hälfte aus, weil es in geschädigten Bereichen mit steigender Lautstärke schneller laut wird (Recruitment).
+  - **Ich mag viel Bass: Gewöhnung oder Geschmack?** Vermutlich beides. Auch normal Hörende bevorzugen meist etwas mehr Bass als neutral (Harman-Forschung). Bass nach Geschmack obendrauf legen und nach ein, zwei Wochen Eingewöhnung neu vergleichen.
+  - **Warum der Lautstärke-Hinweis?** Der Pre-Amp verhindert nur digitales Übersteuern, nicht zu hohe Lautstärke im Ohr.
+  - **Ersetzt das ein Hörgerät?** Nein, IncuSync ist kein Medizinprodukt (siehe Entscheidungen).
 
 ---
 

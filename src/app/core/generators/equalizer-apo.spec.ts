@@ -14,7 +14,7 @@ describe('buildEqualizerConfiguration', () => {
     // Ausführen
     const result = buildEqualizerConfiguration(example);
     const expected =
-      'Preamp: -7 dB\nChannel: L\nFilter: ON PK Fc 125 Hz Gain 3 dB Q 1.41\nChannel: R\nFilter: ON PK Fc 125 Hz Gain 2 dB Q 1.41\n';
+      'Preamp: -7 dB\nChannel: L\nGraphicEQ: 125 3; 250 0\nChannel: R\nGraphicEQ: 125 2; 250 0\n';
 
     // Prüfen
     expect(result).toBe(expected);
@@ -35,7 +35,7 @@ describe('buildEqualizerConfiguration', () => {
     // Ausführen
     const result = buildEqualizerConfiguration(example);
     const expected =
-      'Preamp: -7 dB\nChannel: L\nFilter: ON PK Fc 125 Hz Gain 3 dB Q 1.41\nFilter: ON PK Fc 250 Hz Gain 5 dB Q 1.41\nChannel: R\nFilter: ON PK Fc 125 Hz Gain 2 dB Q 1.41\n';
+      'Preamp: -7 dB\nChannel: L\nGraphicEQ: 125 3; 250 5; 500 0\nChannel: R\nGraphicEQ: 125 2; 250 0\n';
 
     // Prüfen
     expect(result).toBe(expected);
@@ -53,7 +53,7 @@ describe('buildEqualizerConfiguration', () => {
     // Ausführen
     const result = buildEqualizerConfiguration(example);
     const expected =
-      'Preamp: -30.9 dB\nChannel: L\nFilter: ON PK Fc 1000 Hz Gain 29.9 dB Q 1.41\nChannel: R\nFilter: ON PK Fc 125 Hz Gain 0.3 dB Q 1.41\n';
+      'Preamp: -30.9 dB\nChannel: L\nGraphicEQ: 1000 29.9; 2001 0\nChannel: R\nGraphicEQ: 125 0.3; 250 0\n';
 
     // Prüfen
     expect(result).toBe(expected);
@@ -71,7 +71,7 @@ describe('buildEqualizerConfiguration', () => {
     // Ausführen
     const result = buildEqualizerConfiguration(example);
     const expected =
-      'Preamp: 0 dB\nChannel: L\nFilter: ON PK Fc 1000 Hz Gain 0 dB Q 1.41\nChannel: R\nFilter: ON PK Fc 125 Hz Gain 0.3 dB Q 1.41\n';
+      'Preamp: 0 dB\nChannel: L\nGraphicEQ: 1000 0; 2001 0\nChannel: R\nGraphicEQ: 125 0.3; 250 0\n';
 
     // Prüfen
     expect(result).toBe(expected);
@@ -85,7 +85,7 @@ describe('buildEqualizerConfiguration', () => {
       leftEar: [{ frequency: 125, gain: 3, qFactor: 1.41 }],
       rightEar: [],
     };
-    const expected = 'Preamp: -7 dB\nChannel: L\nFilter: ON PK Fc 125 Hz Gain 3 dB Q 1.41\nChannel: R\n';
+    const expected = 'Preamp: -7 dB\nChannel: L\nGraphicEQ: 125 3; 250 0\nChannel: R\n';
 
     // Ausführen
     const result = buildEqualizerConfiguration(example);
@@ -108,7 +108,26 @@ describe('buildEqualizerConfiguration', () => {
 
     // Prüfen: one `#` line, then the config exactly as without the warning
     expect(result).toMatch(
-      /^# [^\n]+\nPreamp: -21 dB\nChannel: L\nFilter: ON PK Fc 1000 Hz Gain 20 dB Q 1.41\nChannel: R\n$/,
+      /^# [^\n]+\nPreamp: -21 dB\nChannel: L\nGraphicEQ: 1000 20; 2000 0\nChannel: R\n$/,
     );
+  });
+
+  it('lets the curve fall back to 0 dB one octave above the highest point', () => {
+    // Vorbereiten
+    const example: ExportConfig = {
+      preAmp: -31,
+      volumeWarning: true,
+      leftEar: [
+        { frequency: 4000, gain: 30, qFactor: 1.41 },
+        { frequency: 8000, gain: 30, qFactor: 1.41 },
+      ],
+      rightEar: [],
+    };
+
+    // Ausführen
+    const result = buildEqualizerConfiguration(example);
+
+    // Prüfen: without the 16000 point, GraphicEQ would keep 30 dB up to 20 kHz
+    expect(result).toContain('GraphicEQ: 4000 30; 8000 30; 16000 0\n');
   });
 });
