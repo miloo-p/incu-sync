@@ -12,7 +12,9 @@
           min="0"
           max="120"
           [value]="
-            eqService.activeChannel() === 'right' ? eqService.rightEarDb()[i] : eqService.leftEarDb()[i]
+            eqService.activeChannel() === 'right'
+              ? eqService.rightEarDb()[i]
+              : eqService.leftEarDb()[i]
           "
           (input)="onInputChange(i, $event)"
         />
@@ -52,7 +54,9 @@
           [attr.cx]="getXPosition(i)"
           [attr.cy]="
             getYPosition(
-              eqService.activeChannel() === 'right' ? eqService.rightEarDb()[i] : eqService.leftEarDb()[i]
+              eqService.activeChannel() === 'right'
+                ? eqService.rightEarDb()[i]
+                : eqService.leftEarDb()[i]
             )
           "
           r="8"
@@ -92,7 +96,7 @@
 ></app-export-btn>
 
 <p class="volume-warning">
-  Bei hohen dB-Werten muss die Lautstärke angepasst werden. Vor der Nutzung also herunterdrehen und
-  langsam auf ein angenehmes Level bringen. Der Pre-Amp hilft dabei nur gegen das Übersteuern. Eine
-  Lautstärkeanpassung muss händisch geschehen.
+  With strong boosts, you need to adjust your volume. Turn it down before you start, then raise it
+  slowly to a comfortable level. The pre-amp only prevents clipping, it doesn’t control how loud it
+  gets, so adjusting the volume is up to you.
 </p>

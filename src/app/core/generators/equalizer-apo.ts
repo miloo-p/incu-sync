@@ -5,7 +5,7 @@ import { ExportConfig, FilterConfig } from '../../models/interfaces';
  * so it is only read by people opening the file.
  */
 const VOLUME_WARNING_LINE =
-  '# Hinweis: Bei hohen dB-Werten muss die Lautstärke angepasst werden. Vor der Nutzung also herunterdrehen und langsam auf ein angenehmes Level bringen. Der Pre-Amp hilft dabei nur gegen das Übersteuern. Eine Lautstärkeanpassung muss händisch geschehen.\n';
+  '# Be careful: With strong boosts, you need to adjust your volume. Turn it down before you start, then raise it slowly to a comfortable level. The pre-amp only prevents clipping, it doesn’t control how loud it gets, so adjusting the volume is up to you.\n';
 
 /**
  * Builds the text of an Equalizer APO `config.txt`: an optional volume warning,
